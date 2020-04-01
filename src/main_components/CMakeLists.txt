@@ -1,0 +1,1 @@
+add_executable(aspsio main.cpp central_data_manager.cpp input_manager.cpp parser.cpp aspif_parser.cpp)
