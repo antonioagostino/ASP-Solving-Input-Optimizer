@@ -3,17 +3,17 @@ using namespace aspsio;
 
 InputManager::InputManager(int argc, char const *argv[]):help_required(false), input_file(""), 
 a_projection_reverse_activated(true), b_projection_reverse_activated(true), fun_terms_projection_reverse_activated(true),
-decomposition_reverse_activated(true), isolated_vars_projection_reverse_activated(true)
+decomposition_reverse_activated(true), isolated_vars_projection_reverse_activated(true), params_number(argc - 1)
 {
 
-    input_parameters = new std::string[argc];
+    input_parameters = new std::string[params_number];
 
-    for (int i = 1; i < argc; i++)
+    for (int i = 0; i < params_number; i++)
     {
         if(help_required)
             break;
         
-        input_parameters[i] = std::string(argv[i]);
+        input_parameters[i] = std::string(argv[i + 1]);
         ManageInput(input_parameters[i]);
     }
     
@@ -87,4 +87,8 @@ std::vector<std::string>& InputManager::OpenInputEncoding(){
     }
 
     return input_data;
+}
+
+InputManager::~InputManager(){
+    delete[] input_parameters;
 }

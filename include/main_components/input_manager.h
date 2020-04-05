@@ -23,6 +23,7 @@ namespace aspsio {
             bool fun_terms_projection_reverse_activated;
             bool isolated_vars_projection_reverse_activated;
             bool help_required;
+            int params_number;
 
 
             void ManageInput(const std::string &input_argument);
@@ -38,7 +39,8 @@ namespace aspsio {
             bool IsBProjectionReverseActivated(){ return b_projection_reverse_activated; }
             bool IsFunTermsProjectionReverseActivated(){ return fun_terms_projection_reverse_activated; }
             bool IsIsolatedVarsProjectionReverseActivated(){ return isolated_vars_projection_reverse_activated; }
-
+            bool InputFilePathSelected(){ return !(input_file_path == ""); }
+            ~InputManager();
     };
 
 }

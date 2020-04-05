@@ -13,6 +13,9 @@ namespace aspsio {
         private:
             InputManager input_manager;
             Parser *aspif_parser;
+            std::vector<std::list<Rule*>> rules_to_optimize;
+            std::vector<std::string> patterns_to_match;
+            
         public:
             CentralDataManager(int argc, char const *argv[]);
     };
