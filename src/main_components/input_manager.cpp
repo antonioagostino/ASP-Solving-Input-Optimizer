@@ -72,21 +72,25 @@ void InputManager::ProcessExecutionOption(const std::string &execution_option){
     }
 }
 
-// Checks if input file exists and returns its content
-// or a void vector if the file doesn't exist
-std::vector<std::string>& InputManager::OpenInputEncoding(){
+// Checks if input file exists and gets its content
+
+bool InputManager::OpenInputEncoding(){
     
     input_file.open(input_file_path);
     std::string line;
+    bool return_value = false;
 
     if(input_file.good()){
         while (std::getline(input_file, line))
         {
             input_data.push_back(line);
         }
+
+        return_value = true;
     }
 
-    return input_data;
+    input_file.close();
+    return return_value;
 }
 
 InputManager::~InputManager(){

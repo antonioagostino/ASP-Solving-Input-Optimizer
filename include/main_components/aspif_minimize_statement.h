@@ -6,13 +6,13 @@ namespace aspsio {
 
     class AspifMinimizeStatement : public Rule {
         protected:
-            std::list<int> weights;
             int priority;
 
         public:
             AspifMinimizeStatement();
             void SetPriority(const int &value){ priority = value; }
-            void AddWeight(const int &value){ weights.push_back(value); }
+            int GetPriority(){ return priority; }
+            virtual void DoOutput() override;
     };
 
 }

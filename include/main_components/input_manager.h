@@ -33,7 +33,8 @@ namespace aspsio {
         public:
             InputManager(int argc, char const *argv[]);
             bool HelpRequired(){ return help_required; }
-            std::vector<std::string>& OpenInputEncoding();
+            bool OpenInputEncoding();
+            std::vector<std::string>& GetInputEncoding(){ return input_data; }
             bool IsDecompositionReverseActivated(){ return decomposition_reverse_activated; }
             bool IsAProjectionReverseActivated(){ return a_projection_reverse_activated; }
             bool IsBProjectionReverseActivated(){ return b_projection_reverse_activated; }

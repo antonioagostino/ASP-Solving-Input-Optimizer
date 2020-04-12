@@ -1,7 +1,7 @@
 #include "../../include/main_components/aspif_parser.h"
 using namespace aspsio;
 
-AspifParser::AspifParser(const std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
+AspifParser::AspifParser(std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
                     std::vector<std::string> &pattern_set):Parser(input_data, rules_sets, pattern_set)
 {    
    
@@ -36,6 +36,8 @@ void AspifParser::SaveAuxiliarPredicates(){
                     // The first element is the predicate's id
                     // The second element is the type of Rewriting
                     aux_predicates.push_back(std::pair<int, int>(predicate_id, i));
+                    input_encoding->at(line_to_parse) = "";
+
                     break;
                 }
 
@@ -60,9 +62,9 @@ void AspifParser::SaveRulesToOptimize(){
         int statement_type = std::stoi(input_encoding->at(i).substr(0, 1));
 
         if(statement_type == 1){ //We are parsing a rule statement
-            ParseRuleStatement(input_encoding->at(i).substr(2));
+            ParseRuleStatement(input_encoding->at(i).substr(2), input_encoding->at(i));
         } else if(statement_type == 2){ //We are parsing a minimize statement
-            ParseMinimizeStatement(input_encoding->at(i).substr(2));
+            ParseMinimizeStatement(input_encoding->at(i).substr(2), input_encoding->at(i));
         }
 
     }
@@ -71,7 +73,7 @@ void AspifParser::SaveRulesToOptimize(){
 // It parses an Aspif Rule Statement to check if it contains auxiliar predicates
 // if it's true, calls a method to store it
 
-void AspifParser::ParseRuleStatement(const std::string &input_line){
+void AspifParser::ParseRuleStatement(std::string input_line, std::string &full_input_line){
 
     bool rule_must_be_optimized = false;
     int head_type;
@@ -95,7 +97,7 @@ void AspifParser::ParseRuleStatement(const std::string &input_line){
     }
     
     if(rule_must_be_optimized){
-        StoreSingleRuleStatement(input_line.substr(2), head_type);
+        StoreSingleRuleStatement(input_line.substr(2), full_input_line, head_type);
     } else {
 
         int body_type, body_size, lower_bound;
@@ -135,7 +137,7 @@ void AspifParser::ParseRuleStatement(const std::string &input_line){
         }
 
         if(rule_must_be_optimized)
-            StoreSingleRuleStatement(input_line.substr(2), head_type);
+            StoreSingleRuleStatement(input_line.substr(2), full_input_line, head_type);
         
     }
 }
@@ -143,7 +145,7 @@ void AspifParser::ParseRuleStatement(const std::string &input_line){
 // It parses an Aspif Minimize Statement to check if it contains auxiliar predicates
 // if it's true, calls a method to store it
 
-void AspifParser::ParseMinimizeStatement(const std::string &input_line){
+void AspifParser::ParseMinimizeStatement(std::string input_line, std::string &full_input_line){
 
     bool rule_must_be_optimized = false;
     std::istringstream sstream(input_line);
@@ -167,7 +169,7 @@ void AspifParser::ParseMinimizeStatement(const std::string &input_line){
     }
 
     if(rule_must_be_optimized)
-        StoreSingleMinimizeStatement(input_line.substr(2), priority);
+        StoreSingleMinimizeStatement(input_line.substr(2), full_input_line, priority);
     
 
 }
@@ -175,7 +177,7 @@ void AspifParser::ParseMinimizeStatement(const std::string &input_line){
 // Stores a single Rule Statement of the aspif format, which before was analyzed
 // and that analysis proves that it contains auxiliar predicates
 
-void AspifParser::StoreSingleRuleStatement(const std::string &input_line, const int &head_type){
+void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &full_input_line, const int &head_type){
     
     std::istringstream sstream(input_line);
     AspifRuleStatement *rule = new AspifRuleStatement();
@@ -188,6 +190,7 @@ void AspifParser::StoreSingleRuleStatement(const std::string &input_line, const 
 
     
     rule->SetHeadType(head_t);
+    rule->SetEncodingLine(full_input_line);
     int head_size;
     bool head_aux_found = false;
 
@@ -213,7 +216,27 @@ void AspifParser::StoreSingleRuleStatement(const std::string &input_line, const 
 
         }
 
-        rule->AddInHead(predicate_id, is_an_auxiliar_predicate);
+        Predicate *predicate;
+
+        if(is_an_auxiliar_predicate){
+            
+            auto element = aux_predicates_instances.find(predicate_id);
+
+            if(element == aux_predicates_instances.end()){
+                predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+                
+            } else {
+                predicate = element->second;
+            }
+
+            predicate->IncrementOccurrencesInHeads();
+
+        } else {
+            predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
+        }
+
+        rule->AddInHead(predicate);
 
     }
 
@@ -256,14 +279,49 @@ void AspifParser::StoreSingleRuleStatement(const std::string &input_line, const 
             }
         }
 
-        rule->AddInBody(predicate_id, is_an_auxiliar_predicate);
+        Predicate *predicate;
 
         if(body_t == WeightBody){
             int weight;
 
             sstream >> weight;
-            rule->AddWeight(weight);
+            
+            if(is_an_auxiliar_predicate){
+                auto element = aux_predicates_instances.find(predicate_id);
+
+                if(element == aux_predicates_instances.end()){
+                    predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
+                    aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+                } else {
+                    predicate = element->second;
+                }
+
+                predicate->IncrementOccurrencesInBodies();
+
+            } else {
+                predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
+            }
+            
+        } else {
+
+            if(is_an_auxiliar_predicate){
+                auto element = aux_predicates_instances.find(predicate_id);
+
+                if(element == aux_predicates_instances.end()){
+                    predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
+                    aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+                } else {
+                    predicate = element->second;
+                }
+
+                predicate->IncrementOccurrencesInBodies();
+                
+            } else {
+                predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
+            }
         }
+        
+        rule->AddInBody(predicate);
 
     }
     
@@ -272,11 +330,12 @@ void AspifParser::StoreSingleRuleStatement(const std::string &input_line, const 
 // Stores a single Minimize Statement of the aspif format, which before was analyzed
 // and that analysis proves that it contains auxiliar predicates
 
-void AspifParser::StoreSingleMinimizeStatement(const std::string &input_line, const int &priority){
+void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::string &full_input_line, const int &priority){
     
     std::istringstream sstream(input_line);
     AspifMinimizeStatement *rule = new AspifMinimizeStatement();
     rule->SetPriority(priority);
+    rule->SetEncodingLine(full_input_line);
     
     int literals_number;
 
@@ -298,12 +357,28 @@ void AspifParser::StoreSingleMinimizeStatement(const std::string &input_line, co
 
         }
 
-        rule->AddInBody(predicate_id, is_an_auxiliar_predicate);
-
         int weight;
 
         sstream >> weight;
 
-        rule->AddWeight(weight);
+        Predicate *predicate;
+
+        if(is_an_auxiliar_predicate){
+            auto element = aux_predicates_instances.find(predicate_id);
+
+            if(element == aux_predicates_instances.end()){
+                predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
+                aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+            } else {
+                predicate = element->second;
+            }
+
+            predicate->IncrementOccurrencesInBodies();
+
+        } else {
+            predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
+        }
+
+        rule->AddInBody(predicate);
     }
 }

@@ -18,15 +18,17 @@ namespace aspsio {
         protected:
             HeadType head_type;
             BodyType body_type;
-            std::list<int> weights;
             int lower_bound;
 
         public:
             AspifRuleStatement();
             void SetLowerBound(const int &value){ lower_bound = value; }
-            void AddWeight(const int &value){ weights.push_back(value); }
             void SetHeadType(HeadType type){ head_type = type; }
             void SetBodyType(BodyType type){ body_type = type; }
+            int GetLowerBound(){ return lower_bound; }
+            HeadType GetHeadType(){ return head_type; }
+            BodyType GetBodyType(){ return body_type; }
+            virtual void DoOutput() override;
     };
 
 }

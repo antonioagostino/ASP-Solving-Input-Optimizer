@@ -1,33 +1,41 @@
 #ifndef RULE_H
 #define RULE_H
 #include <list>
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include "weighted_predicate.h"
 
 namespace aspsio {
 
     class Rule {
         
         protected:
-            std::list<int> body;
-            std::list<int> head;
-            int aux_pred_in_head;
-            int aux_pred_in_body;
-        public:
-            Rule():aux_pred_in_body(0), aux_pred_in_head(0){}
-            void AddInHead(const int &id, bool auxiliar_predicate)
-            { 
-                if(auxiliar_predicate)
-                    aux_pred_in_head++;
-                
-                head.push_back(id); 
-            }
-            void AddInBody(const int &id, bool auxiliar_predicate)
-            {
-                if(auxiliar_predicate)
-                    aux_pred_in_body++;
-                
-                body.push_back(id); 
-            }
+            std::list<Predicate*> body;
+            std::list<Predicate*> head;
+            std::string *encoding_line;
+            int aux_preds_in_body_number;
+            int aux_preds_in_head_number;
+            bool erasable;
+            bool deep_delete;
 
+        public:
+            Rule();
+            virtual void AddInHead(Predicate *predicate);
+            virtual void AddInBody(Predicate *predicate);
+            bool IsErasable(){ return erasable; }
+            void SetErasable(const bool &state){ erasable = state; }
+            int AuxiliarPredicatesInBodyNumber(){ return aux_preds_in_body_number; }
+            int AuxiliarPredicatesInHeadNumber(){ return aux_preds_in_head_number; }
+            std::list<Predicate*>& GetPredicatesInHead(){ return head; }
+            std::list<Predicate*>& GetPredicatesInBody(){ return body; }
+            std::list<Predicate*> GetAuxiliarPredicatesInHead();
+            std::list<Predicate*> GetAuxiliarPredicatesInBody();
+            bool IsDeepDelete(){ return deep_delete; }
+            void SetDeepDelete(const bool &value){ deep_delete = value; }
+            void SetEncodingLine(std::string &line){ encoding_line = &line; }
+            virtual void DoOutput() = 0;
+            ~Rule();
     };
 
 }

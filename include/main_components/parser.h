@@ -4,6 +4,7 @@
 #include <list>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 #include "aspif_minimize_statement.h"
 #include "aspif_rule_statement.h"
 namespace aspsio {
@@ -13,7 +14,7 @@ namespace aspsio {
     
     class Parser {
         protected:
-            const std::vector<std::string> *input_encoding;
+            std::vector<std::string> *input_encoding;
 
             // Each list of rules contains only rules rewritten by 
             // the SAME Rewriting method (a rule can exist in two or more lists)
@@ -25,13 +26,21 @@ namespace aspsio {
             // The first element is the predicate's id
             // The second element is the type of Rewriting
             std::vector<std::pair<int, int>> aux_predicates;
+
+            // An Hash Table of auxiliar predicates used to save their
+            // occurrences in rules
+            std::unordered_map<int, Predicate*> aux_predicates_instances;
+
             int line_to_parse;
 
         public:
-            Parser(const std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
+            Parser(std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
                     std::vector<std::string> &pattern_set);
             virtual void StartAnalysis() = 0;
             void AddReverseParsingOption(const std::string &pattern);
+            std::unordered_map<int, Predicate*>& GetAuxPredicatesInstances(){
+                return aux_predicates_instances;
+            }
     };
 }
 

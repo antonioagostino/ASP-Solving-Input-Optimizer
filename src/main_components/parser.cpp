@@ -1,7 +1,7 @@
 #include "../../include/main_components/parser.h"
 using namespace aspsio;
 
-Parser::Parser(const std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
+Parser::Parser(std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
                     std::vector<std::string> &pattern_set)
 {
     input_encoding = &input_data;
