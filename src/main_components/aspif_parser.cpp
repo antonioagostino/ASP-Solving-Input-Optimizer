@@ -1,10 +1,20 @@
 #include "../../include/main_components/aspif_parser.h"
 using namespace aspsio;
 
-AspifParser::AspifParser(std::vector<std::string> &input_data, std::vector<std::list<Rule*>> &rules_sets, 
-                    std::vector<std::string> &pattern_set):Parser(input_data, rules_sets, pattern_set)
-{    
-   
+AspifParser::AspifParser(std::list<std::string> &input_data, std::vector<std::list<AspifStatement*>> &rules_sets, 
+                    std::vector<std::string> &pattern_set)
+{
+    input_encoding = &input_data;
+    rules_to_optimize = &rules_sets;
+    patterns_to_match = &pattern_set;
+}
+
+//  Adds a new Rewriting Pattern that auxiliar precicates have to match
+
+void AspifParser::AddReverseParsingOption(const std::string &pattern){
+    rules_to_optimize->push_back(std::list<AspifStatement*>());
+    patterns_to_match->push_back(pattern);
+    aux_predicates_instances.push_back(std::unordered_map<int, AspifLiteral*>());
 }
 
 void AspifParser::StartAnalysis(){
@@ -18,7 +28,12 @@ void AspifParser::StartAnalysis(){
 
 void AspifParser::SaveAuxiliarPredicates(){
     
-    line_to_parse = input_encoding->size() - 2;
+    line_to_parse = input_encoding->end();
+
+    //Avoiding the parsing of last line "0"
+    for (int i = 0; i < 2; i++)
+        line_to_parse--;
+
     bool show_section_ended = false;
 
     while (!show_section_ended)
@@ -26,21 +41,29 @@ void AspifParser::SaveAuxiliarPredicates(){
         int statement_type, name_lenght, predicate_id, condition_lenght;
         std::string predicate_name;
 
-        std::istringstream sstream(input_encoding->at(line_to_parse));
+        std::istringstream sstream(*line_to_parse);
         sstream >> statement_type >> name_lenght >> predicate_name >> condition_lenght >> predicate_id;
+
+        //  Statement Type "4" represents Aspif Output Statement
         if(statement_type == 4){
-            for (int i = 0; i < patterns_to_match->size(); i++)
-            {
-                if(predicate_name.substr(0, patterns_to_match->at(i).size()) == patterns_to_match->at(i)){
+            
+            //  If the auxiliar predicate isn't a fact
+            if(condition_lenght > 0){
 
-                    // The first element is the predicate's id
-                    // The second element is the type of Rewriting
-                    aux_predicates.push_back(std::pair<int, int>(predicate_id, i));
-                    input_encoding->at(line_to_parse) = "";
+                //  It checks if auxiliar predicate's name matches a rewriting pattern
+                for (int i = 0; i < patterns_to_match->size(); i++)
+                {
+                    if(predicate_name.substr(0, patterns_to_match->at(i).size()) == patterns_to_match->at(i)){
 
-                    break;
+                        // The first element is the predicate's id
+                        // The second element is the type of Rewriting
+                        aux_predicates.insert(std::pair<int, int>(predicate_id, i));
+                        *line_to_parse = "";
+
+                        break;
+                    }
+
                 }
-
             }
 
             line_to_parse--;
@@ -49,6 +72,10 @@ void AspifParser::SaveAuxiliarPredicates(){
         }
         
     }
+
+    //  To avoid jumping last line
+    line_to_parse++;
+
 }
 
 // Checks if a rule contains an auxiliar predicate, if it's true
@@ -56,15 +83,19 @@ void AspifParser::SaveAuxiliarPredicates(){
 
 void AspifParser::SaveRulesToOptimize(){
 
+    auto it = input_encoding->begin();
+
     //We can avoid to parse the aspif header (so we start from index 1)
-    for (int i = 1; i < line_to_parse; i++)
+    it++;
+
+    for (; it != line_to_parse; it++)
     {
-        int statement_type = std::stoi(input_encoding->at(i).substr(0, 1));
+        int statement_type = std::stoi((*it).substr(0, 1));
 
         if(statement_type == 1){ //We are parsing a rule statement
-            ParseRuleStatement(input_encoding->at(i).substr(2), input_encoding->at(i));
+            ParseRuleStatement((*it).substr(2), (*it));
         } else if(statement_type == 2){ //We are parsing a minimize statement
-            ParseMinimizeStatement(input_encoding->at(i).substr(2), input_encoding->at(i));
+            ParseMinimizeStatement((*it).substr(2), (*it));
         }
 
     }
@@ -86,9 +117,9 @@ void AspifParser::ParseRuleStatement(std::string input_line, std::string &full_i
     {
         int predicate_id;
         sstream >> predicate_id;
-        for (int j = 0; j < aux_predicates.size(); j++)
+        for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
         {
-            if(predicate_id == aux_predicates[j].first){
+            if(predicate_id == j->first){
                 rule_must_be_optimized = true;
                 break;
             }
@@ -121,9 +152,9 @@ void AspifParser::ParseRuleStatement(std::string input_line, std::string &full_i
             bool is_an_auxiliar_predicate = false;
 
             sstream >> predicate_id;
-            for (int j = 0; j < aux_predicates.size(); j++)
+            for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
             {
-                if(predicate_id == aux_predicates[j].first){
+                if(predicate_id == j->first){
                     rule_must_be_optimized = true;
                     break;
                 }
@@ -159,9 +190,9 @@ void AspifParser::ParseMinimizeStatement(std::string input_line, std::string &fu
         int predicate_id;
 
         sstream >> predicate_id;
-        for (int j = 0; j < aux_predicates.size(); j++)
+        for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
         {
-            if(predicate_id == aux_predicates[j].first){
+            if(predicate_id == j->first){
                 rule_must_be_optimized = true;
                 break;
             }
@@ -187,53 +218,55 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
         head_t = Disjunction;
     else if(head_type == 1)
         head_t = Choice;
-
     
     rule->SetHeadType(head_t);
     rule->SetEncodingLine(full_input_line);
     int head_size;
     bool head_aux_found = false;
-
     sstream >> head_size;
 
     for (int i = 0; i < head_size; i++)
     {
         int predicate_id;
         bool is_an_auxiliar_predicate = false;
+        int rewriting_type_id = -1;
 
         sstream >> predicate_id;
         if(!head_aux_found){
 
-            for (int j = 0; j < aux_predicates.size(); j++)
+            for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
             {
-                if(predicate_id == aux_predicates[j].first){
+                if(predicate_id == j->first){
                     is_an_auxiliar_predicate = true;
                     head_aux_found = true;
-                    rules_to_optimize->at(aux_predicates[j].second).push_back(rule);
+                    rewriting_type_id = j->second;
+                    if(find(rules_to_optimize->at(rewriting_type_id).begin(), rules_to_optimize->at(rewriting_type_id).end(), rule) == rules_to_optimize->at(rewriting_type_id).end())
+                        rules_to_optimize->at(rewriting_type_id).push_back(rule);
                     break;
                 }
             }
 
         }
 
-        Predicate *predicate;
+        AspifLiteral *predicate;
 
         if(is_an_auxiliar_predicate){
-            
-            auto element = aux_predicates_instances.find(predicate_id);
 
-            if(element == aux_predicates_instances.end()){
-                predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
-                aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+            auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
+
+            if(element == aux_predicates_instances[rewriting_type_id].end()){
+                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
                 
             } else {
                 predicate = element->second;
             }
 
+            // It helps to save computation time later, during the Reversing Phase
             predicate->IncrementOccurrencesInHeads();
 
         } else {
-            predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
+            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
         }
 
         rule->AddInHead(predicate);
@@ -268,61 +301,48 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
     {
         int predicate_id;
         bool is_an_auxiliar_predicate = false;
-
+        int rewriting_type_id = -1;
         sstream >> predicate_id;
-        for (int j = 0; j < aux_predicates.size(); j++)
+        for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
         {
-            if(predicate_id == aux_predicates[j].first){
+            if(predicate_id == j->first){
                 is_an_auxiliar_predicate = true;
-                rules_to_optimize->at(aux_predicates[j].second).push_back(rule);
+                rewriting_type_id = j->second;
+                if(find(rules_to_optimize->at(rewriting_type_id).begin(), rules_to_optimize->at(rewriting_type_id).end(), rule) == rules_to_optimize->at(rewriting_type_id).end())
+                    rules_to_optimize->at(rewriting_type_id).push_back(rule);
                 break;
             }
         }
 
-        Predicate *predicate;
+        AspifLiteral *predicate;
+
+        if(is_an_auxiliar_predicate){
+
+            auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
+
+            if(element == aux_predicates_instances[rewriting_type_id].end()){
+                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
+            } else {
+                predicate = element->second;
+            }
+
+            // It helps to save computation time later, during the Reversing Phase
+            predicate->IncrementOccurrencesInBodies();
+
+        } else {
+            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+        }
 
         if(body_t == WeightBody){
             int weight;
 
             sstream >> weight;
-            
-            if(is_an_auxiliar_predicate){
-                auto element = aux_predicates_instances.find(predicate_id);
-
-                if(element == aux_predicates_instances.end()){
-                    predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
-                    aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
-                } else {
-                    predicate = element->second;
-                }
-
-                predicate->IncrementOccurrencesInBodies();
-
-            } else {
-                predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
-            }
+            rule->AddInBody(predicate, new int(weight));
             
         } else {
-
-            if(is_an_auxiliar_predicate){
-                auto element = aux_predicates_instances.find(predicate_id);
-
-                if(element == aux_predicates_instances.end()){
-                    predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
-                    aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
-                } else {
-                    predicate = element->second;
-                }
-
-                predicate->IncrementOccurrencesInBodies();
-                
-            } else {
-                predicate = new Predicate(predicate_id, is_an_auxiliar_predicate);
-            }
+            rule->AddInBody(predicate);
         }
-        
-        rule->AddInBody(predicate);
-
     }
     
 }
@@ -345,13 +365,16 @@ void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::stri
     {
         int predicate_id;
         bool is_an_auxiliar_predicate = false;
+        int rewriting_type_id = -1;
 
         sstream >> predicate_id;
-        for (int j = 0; j < aux_predicates.size(); j++)
+        for (auto j = aux_predicates.begin(); j != aux_predicates.end(); j++)
         {
-            if(predicate_id == aux_predicates[j].first){
+            if(predicate_id == j->first){
                 is_an_auxiliar_predicate = true;
-                rules_to_optimize->at(aux_predicates[j].second).push_back(rule);
+                rewriting_type_id = j->second;
+                if(find(rules_to_optimize->at(rewriting_type_id).begin(), rules_to_optimize->at(rewriting_type_id).end(), rule) == rules_to_optimize->at(rewriting_type_id).end())
+                    rules_to_optimize->at(rewriting_type_id).push_back(rule);
                 break;
             }
 
@@ -361,24 +384,25 @@ void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::stri
 
         sstream >> weight;
 
-        Predicate *predicate;
+        AspifLiteral *predicate;
 
         if(is_an_auxiliar_predicate){
-            auto element = aux_predicates_instances.find(predicate_id);
+            auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
 
-            if(element == aux_predicates_instances.end()){
-                predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
-                aux_predicates_instances.insert(std::pair<int, Predicate*>(predicate_id, predicate));
+            if(element == aux_predicates_instances[rewriting_type_id].end()){
+                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
             } else {
                 predicate = element->second;
             }
 
+            // It helps to save computation time later, during the Reversing Phase
             predicate->IncrementOccurrencesInBodies();
 
         } else {
-            predicate = new WeightedPredicate(predicate_id, is_an_auxiliar_predicate, weight);
+            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
         }
 
-        rule->AddInBody(predicate);
+        rule->AddInBody(predicate, new int(weight));
     }
 }

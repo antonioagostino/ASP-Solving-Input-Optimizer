@@ -1,6 +1,6 @@
 #ifndef ASPIF_RULE_STATEMENT
 #define ASPIF_RULE_STATEMENT
-#include "rule.h"
+#include "aspif_statement.h"
 
 namespace aspsio {
 
@@ -14,7 +14,7 @@ namespace aspsio {
         WeightBody,
     };
 
-    class AspifRuleStatement : public Rule {
+    class AspifRuleStatement : public AspifStatement {
         protected:
             HeadType head_type;
             BodyType body_type;
@@ -29,6 +29,7 @@ namespace aspsio {
             HeadType GetHeadType(){ return head_type; }
             BodyType GetBodyType(){ return body_type; }
             virtual void DoOutput() override;
+            virtual AspifStatement* Clone();
     };
 
 }

@@ -1,10 +1,10 @@
 #ifndef ASPIF_MINIMIZE_STATEMENT
 #define ASPIF_MINIMIZE_STATEMENT
-#include "rule.h"
+#include "aspif_statement.h"
 
 namespace aspsio {
 
-    class AspifMinimizeStatement : public Rule {
+    class AspifMinimizeStatement : public AspifStatement {
         protected:
             int priority;
 
@@ -13,6 +13,7 @@ namespace aspsio {
             void SetPriority(const int &value){ priority = value; }
             int GetPriority(){ return priority; }
             virtual void DoOutput() override;
+            virtual AspifStatement* Clone();
     };
 
 }

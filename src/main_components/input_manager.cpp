@@ -3,7 +3,8 @@ using namespace aspsio;
 
 InputManager::InputManager(int argc, char const *argv[]):help_required(false), input_file(""), 
 a_projection_reverse_activated(true), b_projection_reverse_activated(true), fun_terms_projection_reverse_activated(true),
-decomposition_reverse_activated(true), isolated_vars_projection_reverse_activated(true), params_number(argc - 1)
+decomposition_reverse_activated(true), isolated_vars_projection_reverse_activated(true), 
+aggregates_proj_reverse_activated(true), params_number(argc - 1)
 {
 
     input_parameters = new std::string[params_number];
@@ -69,6 +70,8 @@ void InputManager::ProcessExecutionOption(const std::string &execution_option){
         isolated_vars_projection_reverse_activated = false;
     } else if(execution_option == "--no-functerms-reverse"){
         fun_terms_projection_reverse_activated = false;
+    } else if(execution_option == "--no-aggregates-reverse"){
+        aggregates_proj_reverse_activated = false;
     }
 }
 
@@ -76,21 +79,29 @@ void InputManager::ProcessExecutionOption(const std::string &execution_option){
 
 bool InputManager::OpenInputEncoding(){
     
-    input_file.open(input_file_path);
     std::string line;
-    bool return_value = false;
 
+    input_file.open(input_file_path);
     if(input_file.good()){
         while (std::getline(input_file, line))
         {
             input_data.push_back(line);
         }
-
-        return_value = true;
     }
 
     input_file.close();
-    return return_value;
+    if(input_data.size() > 0)
+        return true;
+
+    while (std::getline(std::cin, line))
+    {
+        input_data.push_back(line);
+    }
+
+    if(input_data.size() > 0)
+        return true;
+
+    return false;
 }
 
 InputManager::~InputManager(){

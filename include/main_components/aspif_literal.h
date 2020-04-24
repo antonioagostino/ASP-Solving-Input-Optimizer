@@ -1,11 +1,10 @@
-#ifndef PREDICATE_H
-#define PREDICATE_H
+#ifndef ASPIF_LITERAL_H
+#define ASPIF_LITERAL_H
 #include <string>
 
 namespace aspsio {
 
-    //  A generalization of an ASP Predicate
-    class Predicate {
+    class AspifLiteral {
 
         protected:
             const int id;
@@ -14,14 +13,13 @@ namespace aspsio {
             int occurrences_in_bodies;
 
         public:
-            Predicate(const int &_id, const bool &_auxiliar);
+            AspifLiteral(const int &_id, const bool &_auxiliar);
             int GetId(){ return id; }
             bool IsAuxiliar(){ return auxiliar; }
             int GetOccurrencesInHeads(){ return occurrences_in_heads; }
             int GetOccurrencesInBodies(){ return occurrences_in_bodies; }
             void IncrementOccurrencesInHeads(){ occurrences_in_heads++; }
             void IncrementOccurrencesInBodies(){ occurrences_in_bodies++; }
-            virtual std::string DoOutput();
 
 
 

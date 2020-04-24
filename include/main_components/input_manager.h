@@ -4,6 +4,7 @@
 #include <locale>
 #include <fstream>
 #include <vector>
+#include <list>
 
 namespace aspsio {
 
@@ -13,7 +14,7 @@ namespace aspsio {
     
     class InputManager {
         private:
-            std::vector<std::string> input_data;
+            std::list<std::string> input_data;
             std::string *input_parameters;
             std::string input_file_path;
             std::ifstream input_file;
@@ -22,6 +23,7 @@ namespace aspsio {
             bool b_projection_reverse_activated;
             bool fun_terms_projection_reverse_activated;
             bool isolated_vars_projection_reverse_activated;
+            bool aggregates_proj_reverse_activated;
             bool help_required;
             int params_number;
 
@@ -34,12 +36,13 @@ namespace aspsio {
             InputManager(int argc, char const *argv[]);
             bool HelpRequired(){ return help_required; }
             bool OpenInputEncoding();
-            std::vector<std::string>& GetInputEncoding(){ return input_data; }
+            std::list<std::string>& GetInputEncoding(){ return input_data; }
             bool IsDecompositionReverseActivated(){ return decomposition_reverse_activated; }
             bool IsAProjectionReverseActivated(){ return a_projection_reverse_activated; }
             bool IsBProjectionReverseActivated(){ return b_projection_reverse_activated; }
             bool IsFunTermsProjectionReverseActivated(){ return fun_terms_projection_reverse_activated; }
             bool IsIsolatedVarsProjectionReverseActivated(){ return isolated_vars_projection_reverse_activated; }
+            bool IsAggregatesProjectionReverseActivated(){ return aggregates_proj_reverse_activated; }
             bool InputFilePathSelected(){ return !(input_file_path == ""); }
             ~InputManager();
     };

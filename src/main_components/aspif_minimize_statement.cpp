@@ -12,8 +12,21 @@ void AspifMinimizeStatement::DoOutput(){
 
     for (auto it = body.begin(); it != body.end(); it++)
     {
-        newline += (*it)->DoOutput();
+        newline += std::to_string(it->first->GetId()) + " " + std::to_string(*(it->second)) + " ";
     }
 
     *encoding_line = newline;
+}
+
+AspifStatement* AspifMinimizeStatement::Clone(){
+    AspifMinimizeStatement *new_rule = new AspifMinimizeStatement();
+    new_rule->SetPriority(priority);
+
+    for (auto it = body.begin(); it != body.end(); it++)
+    {
+        new_rule->AddInBody(it->first, it->second);
+    }
+
+    return new_rule;
+    
 }

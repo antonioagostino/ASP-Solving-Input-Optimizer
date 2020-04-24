@@ -12,7 +12,7 @@ void AspifRuleStatement::DoOutput(){
 
     for (auto it = head.begin(); it != head.end(); it++)
     {
-        newline += (*it)->DoOutput();
+        newline += std::to_string((*it)->GetId()) + " ";
     }
     
     newline += std::to_string(body_type) + " ";
@@ -24,8 +24,29 @@ void AspifRuleStatement::DoOutput(){
 
     for (auto it = body.begin(); it != body.end(); it++)
     {
-        newline += (*it)->DoOutput();
+        newline += std::to_string(it->first->GetId()) + " ";
+        if(body_type == WeightBody)
+            newline += std::to_string(*(it->second)) + " ";
     }
 
     *encoding_line = newline;
+}
+
+AspifStatement* AspifRuleStatement::Clone(){
+    AspifRuleStatement *new_rule = new AspifRuleStatement();
+    new_rule->SetBodyType(body_type);
+    new_rule->SetHeadType(head_type);
+    new_rule->SetLowerBound(lower_bound);
+
+    for (auto it = head.begin(); it != head.end(); it++)
+    {
+        new_rule->AddInHead(*it);
+    }
+
+    for (auto it = body.begin(); it != body.end(); it++)
+    {
+        new_rule->AddInBody(it->first, it->second);
+    }
+
+    return new_rule;
 }
