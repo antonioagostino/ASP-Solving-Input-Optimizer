@@ -75,6 +75,22 @@ int AspifRewritingReverser::DoReverse()
         AspifLiteral *predicate_to_substitute = (*it).second;
         bool aux_reversed = false;
         bool auxiliar_adjusted = false;
+        bool auxiliar_will_be_reversed_later = false;
+
+        //  An auxiliar predicate could have a dependence by another auxiliare predicate
+        //  in a rule's body BUT could haven't in other rules. So an auxiliare predicate
+        //  can be reversed only if it has not any dependence.
+
+        for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
+        {
+            if((*rule)->AuxiliarPredicatesInHeadNumber() == 1){
+                AspifLiteral* aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
+                if(aux_in_head != NULL && (*rule)->AuxiliarPredicatesInBodyNumber() > 0){
+                    auxiliar_will_be_reversed_later = true;
+                    break;
+                }
+            }
+        }
 
         // Substitution of rule's bodies containing auxiliar predicates with
         // rules' body where auxiliar predicates appear in head
@@ -84,7 +100,7 @@ int AspifRewritingReverser::DoReverse()
         //  This step is repeated for each auxiliar predicate's occurrence
         //  in head.
 
-        for (int i = 0; i < predicate_to_substitute->GetOccurrencesInHeads(); i++)
+        for (int i = 0; i < predicate_to_substitute->GetOccurrencesInHeads() && !auxiliar_will_be_reversed_later; i++)
         {
             std::list<std::pair<AspifLiteral*, int*>> *body = NULL;
             std::list<AspifStatement*>::iterator rule_to_delete = rules_to_reverse->end();
