@@ -14,13 +14,13 @@ namespace aspsio {
     class AspifRewritingReverser {
 
         protected:
-            std::list<AspifStatement*> *rules_to_reverse;
-            std::unordered_map<int, AspifLiteral*> *aux_predicates_instances;
+            std::list<std::shared_ptr<AspifStatement>> *rules_to_reverse;
+            std::unordered_map<int, std::shared_ptr<AspifLiteral>> *aux_predicates_instances;
             std::list<std::string> *input_encoding;
-            virtual void DoRulesAdjustments(AspifLiteral *auxiliar_to_adjust);
+            virtual void DoRulesAdjustments(std::shared_ptr<AspifLiteral> auxiliar_to_adjust);
 
         public:
-            AspifRewritingReverser(std::list<AspifStatement*> &rules_set, std::unordered_map<int, AspifLiteral*> &_aux_predicates_instances, std::list<std::string> &_input_encoding);
+            AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding);
             virtual int DoReverse();
 
     };

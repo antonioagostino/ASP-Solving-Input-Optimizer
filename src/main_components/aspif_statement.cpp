@@ -1,55 +1,40 @@
 #include "../../include/main_components/aspif_statement.h"
 using namespace aspsio;
 
-AspifStatement::AspifStatement():aux_preds_in_head_number(0), aux_preds_in_body_number(0), deep_delete(true){}
+AspifStatement::AspifStatement():aux_preds_in_head_number(0), aux_preds_in_body_number(0), useless(false){}
 
 AspifStatement::~AspifStatement(){
     
     *encoding_line = "";
-
-    if(deep_delete){
-        for (auto it = head.begin(); it != head.end(); it++)
-        {
-            delete (*it);
-        }
-
-        for (auto it = body.begin(); it != body.end(); it++)
-        {
-            delete (it->first);
-            
-            if(it->second != nullptr)
-                delete (it->second);
-        }
-    }
     
 }
 
-void AspifStatement::AddInBody(AspifLiteral *literal){ 
+void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal){ 
 
     if(literal->IsAuxiliar())
         aux_preds_in_body_number++;
 
-    body.push_back(std::pair<AspifLiteral*, int*>(literal, nullptr));
+    body.push_back(std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(literal, nullptr));
 }
 
-void AspifStatement::AddInBody(AspifLiteral *literal,int *weight){ 
+void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal, std::shared_ptr<int> weight){ 
 
     if(literal->IsAuxiliar())
         aux_preds_in_body_number++;
 
-    body.push_back(std::pair<AspifLiteral*, int*>(literal, weight));
+    body.push_back(std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(literal, weight));
 }
 
-void AspifStatement::AddInHead(AspifLiteral *literal){
+void AspifStatement::AddInHead(std::shared_ptr<AspifLiteral> literal){
     if(literal->IsAuxiliar())
         aux_preds_in_head_number++;
 
     head.push_back(literal);
 }
 
-std::list<AspifLiteral*> AspifStatement::GetAuxiliarPredicatesInBody(){
+std::list<std::shared_ptr<AspifLiteral>> AspifStatement::GetAuxiliarPredicatesInBody(){
 
-    std::list<AspifLiteral*> auxiliars;
+    std::list<std::shared_ptr<AspifLiteral>> auxiliars;
     for (auto it = body.begin(); it != body.end(); it++)
     {
         if((*it).first->IsAuxiliar())
@@ -60,9 +45,9 @@ std::list<AspifLiteral*> AspifStatement::GetAuxiliarPredicatesInBody(){
     
 }
 
-std::list<AspifLiteral*> AspifStatement::GetAuxiliarPredicatesInHead(){
+std::list<std::shared_ptr<AspifLiteral>> AspifStatement::GetAuxiliarPredicatesInHead(){
 
-    std::list<AspifLiteral*> auxiliars;
+    std::list<std::shared_ptr<AspifLiteral>> auxiliars;
     for (auto it = head.begin(); it != head.end(); it++)
     {
         if((*it)->IsAuxiliar())
@@ -73,7 +58,7 @@ std::list<AspifLiteral*> AspifStatement::GetAuxiliarPredicatesInHead(){
     
 }
 
-void AspifStatement::RemoveFromBody(AspifLiteral *literal){
+void AspifStatement::RemoveFromBody(std::shared_ptr<AspifLiteral> literal){
 
     auto pos = body.begin();
 
@@ -92,7 +77,7 @@ void AspifStatement::RemoveFromBody(AspifLiteral *literal){
     body.erase(pos);
 }
 
-void AspifStatement::RemoveFromHead(AspifLiteral *literal){
+void AspifStatement::RemoveFromHead(std::shared_ptr<AspifLiteral> literal){
     auto pos = head.begin();
 
     while (pos != head.end()) {
@@ -110,7 +95,7 @@ void AspifStatement::RemoveFromHead(AspifLiteral *literal){
     head.erase(pos);
 }
 
-std::pair<AspifLiteral*, int*> AspifStatement::FindALiteralInBody(AspifLiteral* val){
+std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>> AspifStatement::FindALiteralInBody(std::shared_ptr<AspifLiteral> val){
     
     auto pos = body.begin();
 
@@ -120,10 +105,10 @@ std::pair<AspifLiteral*, int*> AspifStatement::FindALiteralInBody(AspifLiteral* 
         ++pos;
     }
     
-    return std::pair<AspifLiteral*, int*>(NULL, NULL);
+    return std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(nullptr, nullptr);
 }
 
-AspifLiteral* AspifStatement::FindALiteralInHead(AspifLiteral* val){
+std::shared_ptr<AspifLiteral> AspifStatement::FindALiteralInHead(std::shared_ptr<AspifLiteral> val){
     
     auto pos = head.begin();
 
@@ -133,5 +118,5 @@ AspifLiteral* AspifStatement::FindALiteralInHead(AspifLiteral* val){
         ++pos;
     }
 
-    return NULL;
+    return nullptr;
 }

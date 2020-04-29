@@ -1,7 +1,7 @@
 #include "../../include/main_components/aspif_parser.h"
 using namespace aspsio;
 
-AspifParser::AspifParser(std::list<std::string> &input_data, std::vector<std::list<AspifStatement*>> &rules_sets, 
+AspifParser::AspifParser(std::list<std::string> &input_data, std::vector<std::list<std::shared_ptr<AspifStatement>>> &rules_sets, 
                     std::vector<std::string> &pattern_set)
 {
     input_encoding = &input_data;
@@ -12,9 +12,9 @@ AspifParser::AspifParser(std::list<std::string> &input_data, std::vector<std::li
 //  Adds a new Rewriting Pattern that auxiliar precicates have to match
 
 void AspifParser::AddReverseParsingOption(const std::string &pattern){
-    rules_to_optimize->push_back(std::list<AspifStatement*>());
+    rules_to_optimize->push_back(std::list<std::shared_ptr<AspifStatement>>());
     patterns_to_match->push_back(pattern);
-    aux_predicates_instances.push_back(std::unordered_map<int, AspifLiteral*>());
+    aux_predicates_instances.push_back(std::unordered_map<int, std::shared_ptr<AspifLiteral>>());
 }
 
 void AspifParser::StartAnalysis(){
@@ -211,7 +211,7 @@ void AspifParser::ParseMinimizeStatement(std::string input_line, std::string &fu
 void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &full_input_line, const int &head_type){
     
     std::istringstream sstream(input_line);
-    AspifRuleStatement *rule = new AspifRuleStatement();
+    std::shared_ptr<AspifRuleStatement> rule (new AspifRuleStatement());
     HeadType head_t;
 
     if(head_type == 0)
@@ -248,15 +248,15 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
 
         }
 
-        AspifLiteral *predicate;
+        std::shared_ptr<AspifLiteral> predicate;
 
         if(is_an_auxiliar_predicate){
 
             auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
 
             if(element == aux_predicates_instances[rewriting_type_id].end()){
-                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
-                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
+                predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, std::shared_ptr<AspifLiteral>>(predicate_id, predicate));
                 
             } else {
                 predicate = element->second;
@@ -266,7 +266,7 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
             predicate->IncrementOccurrencesInHeads();
 
         } else {
-            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+            predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
         }
 
         rule->AddInHead(predicate);
@@ -314,15 +314,15 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
             }
         }
 
-        AspifLiteral *predicate;
+        std::shared_ptr<AspifLiteral> predicate;
 
         if(is_an_auxiliar_predicate){
 
             auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
 
             if(element == aux_predicates_instances[rewriting_type_id].end()){
-                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
-                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
+                predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, std::shared_ptr<AspifLiteral>>(predicate_id, predicate));
             } else {
                 predicate = element->second;
             }
@@ -331,14 +331,14 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
             predicate->IncrementOccurrencesInBodies();
 
         } else {
-            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+            predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
         }
 
         if(body_t == WeightBody){
             int weight;
 
             sstream >> weight;
-            rule->AddInBody(predicate, new int(weight));
+            rule->AddInBody(predicate, std::shared_ptr<int>(new int(weight)));
             
         } else {
             rule->AddInBody(predicate);
@@ -353,7 +353,7 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
 void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::string &full_input_line, const int &priority){
     
     std::istringstream sstream(input_line);
-    AspifMinimizeStatement *rule = new AspifMinimizeStatement();
+    std::shared_ptr<AspifMinimizeStatement> rule(new AspifMinimizeStatement());
     rule->SetPriority(priority);
     rule->SetEncodingLine(full_input_line);
     
@@ -384,14 +384,14 @@ void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::stri
 
         sstream >> weight;
 
-        AspifLiteral *predicate;
+        std::shared_ptr<AspifLiteral> predicate;
 
         if(is_an_auxiliar_predicate){
             auto element = aux_predicates_instances[rewriting_type_id].find(predicate_id);
 
             if(element == aux_predicates_instances[rewriting_type_id].end()){
-                predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
-                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, AspifLiteral*>(predicate_id, predicate));
+                predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
+                aux_predicates_instances[rewriting_type_id].insert(std::pair<int, std::shared_ptr<AspifLiteral>>(predicate_id, predicate));
             } else {
                 predicate = element->second;
             }
@@ -400,9 +400,9 @@ void AspifParser::StoreSingleMinimizeStatement(std::string input_line, std::stri
             predicate->IncrementOccurrencesInBodies();
 
         } else {
-            predicate = new AspifLiteral(predicate_id, is_an_auxiliar_predicate);
+            predicate = std::make_shared<AspifLiteral>(predicate_id, is_an_auxiliar_predicate);
         }
 
-        rule->AddInBody(predicate, new int(weight));
+        rule->AddInBody(predicate, std::shared_ptr<int>(new int(weight)));
     }
 }

@@ -29,7 +29,7 @@ namespace aspsio {
             HeadType GetHeadType(){ return head_type; }
             BodyType GetBodyType(){ return body_type; }
             virtual void DoOutput() override;
-            virtual AspifStatement* Clone();
+            virtual std::shared_ptr<AspifStatement> Clone();
     };
 
 }

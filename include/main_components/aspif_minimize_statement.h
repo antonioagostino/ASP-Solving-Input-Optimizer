@@ -13,7 +13,7 @@ namespace aspsio {
             void SetPriority(const int &value){ priority = value; }
             int GetPriority(){ return priority; }
             virtual void DoOutput() override;
-            virtual AspifStatement* Clone();
+            virtual std::shared_ptr<AspifStatement> Clone();
     };
 
 }

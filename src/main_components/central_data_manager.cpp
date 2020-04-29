@@ -92,8 +92,7 @@ void CentralDataManager::StartReversing(){
             {
                 for (auto it = rules_to_optimize[i].begin(); it !=  rules_to_optimize[i].end(); it++)
                 {
-                    (*it)->DoOutput();
-                    (*it)->SetDeepDelete(true);
+                        (*it)->DoOutput();
                 }
                 
             }
@@ -142,13 +141,4 @@ CentralDataManager::~CentralDataManager(){
 
     if(aspif_parser != nullptr)
         delete aspif_parser;
-    
-    for (int i = 0; i < rules_to_optimize.size(); i++)
-    {
-        for (auto it = rules_to_optimize[i].begin(); it !=  rules_to_optimize[i].end(); it++)
-        {
-            delete (*it);
-        }
-        
-    }
 }
