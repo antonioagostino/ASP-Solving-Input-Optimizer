@@ -13,7 +13,13 @@ void AspifMinimizeStatement::DoOutput(){
 
         for (auto it = body.begin(); it != body.end(); it++)
         {
-            newline += std::to_string(it->first->GetId()) + " " + std::to_string(*(it->second)) + " ";
+            int multipl;
+            if(it->IsPositive())
+                multipl = 1;
+            else
+                multipl = -1;
+            
+            newline += std::to_string(it->GetLiteral()->GetId() * multipl) + " " + std::to_string(it->GetWeight()) + " ";
         }
 
         *encoding_line = newline;
@@ -28,7 +34,7 @@ std::shared_ptr<AspifStatement> AspifMinimizeStatement::Clone(){
 
     for (auto it = body.begin(); it != body.end(); it++)
     {
-        new_rule->AddInBody(it->first, it->second);
+        new_rule->AddInBody(it->GetLiteral(), it->GetWeight(), it->IsPositive());
     }
 
     return new_rule;

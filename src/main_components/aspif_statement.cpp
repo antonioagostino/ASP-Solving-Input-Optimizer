@@ -9,27 +9,27 @@ AspifStatement::~AspifStatement(){
     
 }
 
-void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal){ 
+void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal, const bool &positive_literal){ 
 
     if(literal->IsAuxiliar())
         aux_preds_in_body_number++;
 
-    body.push_back(std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(literal, nullptr));
+    body.push_back(AspifRuleLiteral(literal, positive_literal));
 }
 
-void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal, std::shared_ptr<int> weight){ 
+void AspifStatement::AddInBody(std::shared_ptr<AspifLiteral> literal, const int &weight, const bool &positive_literal){ 
 
     if(literal->IsAuxiliar())
         aux_preds_in_body_number++;
 
-    body.push_back(std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(literal, weight));
+    body.push_back(AspifRuleLiteral(literal, weight, positive_literal));
 }
 
 void AspifStatement::AddInHead(std::shared_ptr<AspifLiteral> literal){
     if(literal->IsAuxiliar())
         aux_preds_in_head_number++;
 
-    head.push_back(literal);
+    head.push_back(AspifRuleLiteral(literal));
 }
 
 std::list<std::shared_ptr<AspifLiteral>> AspifStatement::GetAuxiliarPredicatesInBody(){
@@ -37,8 +37,8 @@ std::list<std::shared_ptr<AspifLiteral>> AspifStatement::GetAuxiliarPredicatesIn
     std::list<std::shared_ptr<AspifLiteral>> auxiliars;
     for (auto it = body.begin(); it != body.end(); it++)
     {
-        if((*it).first->IsAuxiliar())
-            auxiliars.push_back(it->first);
+        if((*it).GetLiteral()->IsAuxiliar())
+            auxiliars.push_back(it->GetLiteral());
     }
 
     return auxiliars;
@@ -50,8 +50,8 @@ std::list<std::shared_ptr<AspifLiteral>> AspifStatement::GetAuxiliarPredicatesIn
     std::list<std::shared_ptr<AspifLiteral>> auxiliars;
     for (auto it = head.begin(); it != head.end(); it++)
     {
-        if((*it)->IsAuxiliar())
-            auxiliars.push_back(*it);
+        if((*it).GetLiteral()->IsAuxiliar())
+            auxiliars.push_back(it->GetLiteral());
     }
 
     return auxiliars;
@@ -63,7 +63,7 @@ void AspifStatement::RemoveFromBody(std::shared_ptr<AspifLiteral> literal){
     auto pos = body.begin();
 
     while (pos != body.end()) {
-        if ((*pos).first == literal) 
+        if ((*pos).GetLiteral() == literal) 
             break;
         ++pos;
     }
@@ -81,7 +81,7 @@ void AspifStatement::RemoveFromHead(std::shared_ptr<AspifLiteral> literal){
     auto pos = head.begin();
 
     while (pos != head.end()) {
-        if ((*pos) == literal) 
+        if ((*pos).GetLiteral() == literal) 
             break;
         ++pos;
     }
@@ -95,28 +95,28 @@ void AspifStatement::RemoveFromHead(std::shared_ptr<AspifLiteral> literal){
     head.erase(pos);
 }
 
-std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>> AspifStatement::FindALiteralInBody(std::shared_ptr<AspifLiteral> val){
+AspifRuleLiteral AspifStatement::FindALiteralInBody(std::shared_ptr<AspifLiteral> val){
     
     auto pos = body.begin();
 
     while (pos != body.end()) {
-        if ((*pos).first == val) 
+        if ((*pos).GetLiteral() == val) 
             return *pos;
         ++pos;
     }
     
-    return std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>(nullptr, nullptr);
+    return AspifRuleLiteral(nullptr);
 }
 
-std::shared_ptr<AspifLiteral> AspifStatement::FindALiteralInHead(std::shared_ptr<AspifLiteral> val){
+AspifRuleLiteral AspifStatement::FindALiteralInHead(std::shared_ptr<AspifLiteral> val){
     
     auto pos = head.begin();
 
     while (pos != head.end()) {
-        if ((*pos) == val) 
+        if ((*pos).GetLiteral() == val) 
             return *pos;
         ++pos;
     }
 
-    return nullptr;
+    return AspifRuleLiteral(nullptr);
 }

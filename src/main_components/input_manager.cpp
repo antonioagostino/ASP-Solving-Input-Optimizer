@@ -81,27 +81,33 @@ bool InputManager::OpenInputEncoding(){
     
     std::string line;
 
-    input_file.open(input_file_path);
-    if(input_file.good()){
-        while (std::getline(input_file, line))
+    if(InputFilePathSelected()){
+        input_file.open(input_file_path);
+        if(input_file.good()){
+            while (std::getline(input_file, line))
+            {
+                input_data.push_back(line);
+            }
+        }
+
+        input_file.close();
+        if(input_data.size() > 0)
+            return true;
+
+        return false;
+
+    } else {
+
+        while (std::getline(std::cin, line))
         {
             input_data.push_back(line);
         }
+
+        if(input_data.size() > 0)
+            return true;
+
+        return false;
     }
-
-    input_file.close();
-    if(input_data.size() > 0)
-        return true;
-
-    while (std::getline(std::cin, line))
-    {
-        input_data.push_back(line);
-    }
-
-    if(input_data.size() > 0)
-        return true;
-
-    return false;
 }
 
 InputManager::~InputManager(){

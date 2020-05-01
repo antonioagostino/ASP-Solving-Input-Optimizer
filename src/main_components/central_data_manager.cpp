@@ -13,7 +13,7 @@ void CentralDataManager::StartReversing(){
 
         //  Opens the encoding file selected
         if(input_manager.OpenInputEncoding()){
-
+            
             encoding_file_opened = true;
 
             //  Creates a parser for Aspif Format, passing to it all data structures

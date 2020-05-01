@@ -22,9 +22,8 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
         for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
         {
             if((*rule)->AuxiliarPredicatesInBodyNumber() > 0){
-                std::list<std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>> *auxs_in_body = &(*rule)->GetPredicatesInBody();
-                std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>> position = (*rule)->FindALiteralInBody(auxiliar_to_adjust);
-                if(position.first){
+                AspifRuleLiteral position = (*rule)->FindALiteralInBody(auxiliar_to_adjust);
+                if(position.GetLiteral()){
                     where_to_insert = find(input_encoding->begin(), input_encoding->end(), *(*rule)->GetEncodingLine());
                     
                     //  Duplicates, n - 1 times, rules where this auxiliar predicates occurs in body
@@ -44,12 +43,12 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
                         //  heads to control reversing of rules containing it
                         for (auto it = new_rule->GetPredicatesInBody().begin(); it != new_rule->GetPredicatesInBody().end(); it++)
                         {
-                            (*it).first->IncrementOccurrencesInBodies();
+                            it->GetLiteral()->IncrementOccurrencesInBodies();
                         }
 
                         for (auto it = new_rule->GetPredicatesInHead().begin(); it != new_rule->GetPredicatesInHead().end(); it++)
                         {
-                            (*it)->IncrementOccurrencesInHeads();
+                            it->GetLiteral()->IncrementOccurrencesInHeads();
                         }
                         
                     }
@@ -84,8 +83,8 @@ int AspifRewritingReverser::DoReverse()
         for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
         {
             if((*rule)->AuxiliarPredicatesInHeadNumber() == 1){
-                std::shared_ptr<AspifLiteral> aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
-                if(aux_in_head != NULL && (*rule)->AuxiliarPredicatesInBodyNumber() > 0){
+                AspifRuleLiteral aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
+                if(aux_in_head.GetLiteral() && (*rule)->AuxiliarPredicatesInBodyNumber() > 0){
                     auxiliar_will_be_reversed_later = true;
                     break;
                 }
@@ -102,7 +101,7 @@ int AspifRewritingReverser::DoReverse()
 
         for (int i = 0; i < predicate_to_substitute->GetOccurrencesInHeads() && !auxiliar_will_be_reversed_later; i++)
         {
-            std::list<std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>> *body = NULL;
+            std::list<AspifRuleLiteral> *body = NULL;
             std::list<std::shared_ptr<AspifStatement>>::iterator rule_to_delete = rules_to_reverse->end();
             bool rule_can_be_eliminated = false;
             
@@ -110,8 +109,8 @@ int AspifRewritingReverser::DoReverse()
             {
                 
                 if((*rule)->AuxiliarPredicatesInBodyNumber() == 0 && (*rule)->AuxiliarPredicatesInHeadNumber() == 1){
-                    std::shared_ptr<AspifLiteral> aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
-                    if(aux_in_head != NULL){
+                    AspifRuleLiteral aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
+                    if(aux_in_head.GetLiteral()){
                         body = &(*rule)->GetPredicatesInBody();
                         rule_to_delete = rule;
                         break;
@@ -141,21 +140,24 @@ int AspifRewritingReverser::DoReverse()
 
                         //  First condition: Due to I-DLV rules duplication
                         if(predicate_to_substitute->GetOccurrencesInHeads() == 1 || find(rules_reversed.begin(), rules_reversed.end(), *(*rule)->GetEncodingLine()) == rules_reversed.end()){
-                            std::list<std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>> *auxs_in_body = &(*rule)->GetPredicatesInBody();
-                            std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>> position = (*rule)->FindALiteralInBody(predicate_to_substitute);
-                            if(position.first){
-
-                                std::shared_ptr<int> weight;
-                                if(position.second)
-                                    weight = position.second;
+                            AspifRuleLiteral position = (*rule)->FindALiteralInBody(predicate_to_substitute);
+                            if(position.GetLiteral()){
                                 
-                                (*rule)->RemoveFromBody(position.first);
+                                (*rule)->RemoveFromBody(position.GetLiteral());
                                 for (auto it = body->begin(); it != body->end(); it++)
                                 {
-                                    if(!it->second && weight)
-                                        it->second = weight;
+                                    if(!it->HasWeight() && position.HasWeight())
+                                        it->SetWeight(position.GetWeight());
                                     
-                                    (*rule)->AddInBody(it->first, it->second);
+                                    bool positive = it->IsPositive();
+
+                                    if(!position.IsPositive())
+                                        positive = !positive;
+                                    
+                                    if(it->HasWeight())
+                                        (*rule)->AddInBody(it->GetLiteral(), it->GetWeight(), positive);
+                                    else
+                                        (*rule)->AddInBody(it->GetLiteral(), positive);
                                 }
 
                                 rules_reversed.push_back(*(*rule)->GetEncodingLine());

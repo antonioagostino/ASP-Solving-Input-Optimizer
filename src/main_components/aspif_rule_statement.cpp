@@ -14,7 +14,7 @@ void AspifRuleStatement::DoOutput(){
 
         for (auto it = head.begin(); it != head.end(); it++)
         {
-            newline += std::to_string((*it)->GetId()) + " ";
+            newline += std::to_string(it->GetLiteral()->GetId()) + " ";
         }
         
         newline += std::to_string(body_type) + " ";
@@ -26,9 +26,15 @@ void AspifRuleStatement::DoOutput(){
 
         for (auto it = body.begin(); it != body.end(); it++)
         {
-            newline += std::to_string(it->first->GetId()) + " ";
+            int multipl;
+            if(it->IsPositive())
+                multipl = 1;
+            else
+                multipl = -1;
+            
+            newline += std::to_string(it->GetLiteral()->GetId() * multipl) + " ";
             if(body_type == WeightBody)
-                newline += std::to_string(*(it->second)) + " ";
+                newline += std::to_string(it->GetWeight()) + " ";
         }
 
         *encoding_line = newline;
@@ -45,12 +51,15 @@ std::shared_ptr<AspifStatement> AspifRuleStatement::Clone(){
 
     for (auto it = head.begin(); it != head.end(); it++)
     {
-        new_rule->AddInHead(*it);
+        new_rule->AddInHead(it->GetLiteral());
     }
 
     for (auto it = body.begin(); it != body.end(); it++)
     {
-        new_rule->AddInBody(it->first, it->second);
+        if(it->HasWeight())
+            new_rule->AddInBody(it->GetLiteral(), it->GetWeight(), it->IsPositive());
+        else
+            new_rule->AddInBody(it->GetLiteral(), it->IsPositive());
     }
 
     return new_rule;

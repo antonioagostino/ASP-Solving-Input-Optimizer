@@ -6,15 +6,15 @@
 #include <iostream>
 #include <memory>
 #include <math.h>
-#include "aspif_literal.h"
+#include "aspif_rule_literal.h"
 
 namespace aspsio {
 
     class AspifStatement {
         
         protected:
-            std::list<std::shared_ptr<AspifLiteral>> head;
-            std::list<std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>> body;
+            std::list<AspifRuleLiteral> head;
+            std::list<AspifRuleLiteral> body;
             std::string *encoding_line;
             int aux_preds_in_body_number;
             int aux_preds_in_head_number;
@@ -23,18 +23,18 @@ namespace aspsio {
         public:
             AspifStatement();
             virtual void AddInHead(std::shared_ptr<AspifLiteral> literal);
-            virtual void AddInBody(std::shared_ptr<AspifLiteral> literal);
-            virtual void AddInBody(std::shared_ptr<AspifLiteral> literal, std::shared_ptr<int> weight);
+            virtual void AddInBody(std::shared_ptr<AspifLiteral> literal, const bool &positive_literal);
+            virtual void AddInBody(std::shared_ptr<AspifLiteral> literal, const int &weight, const bool &positive_literal);
             virtual void RemoveFromBody(std::shared_ptr<AspifLiteral> literal);
             virtual void RemoveFromHead(std::shared_ptr<AspifLiteral> literal);
             int AuxiliarPredicatesInBodyNumber(){ return aux_preds_in_body_number; }
             int AuxiliarPredicatesInHeadNumber(){ return aux_preds_in_head_number; }
-            std::list<std::shared_ptr<AspifLiteral>>& GetPredicatesInHead(){ return head; }
-            std::list<std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>>>& GetPredicatesInBody(){ return body; }
+            std::list<AspifRuleLiteral>& GetPredicatesInHead(){ return head; }
+            std::list<AspifRuleLiteral>& GetPredicatesInBody(){ return body; }
             std::list<std::shared_ptr<AspifLiteral>> GetAuxiliarPredicatesInHead();
             std::list<std::shared_ptr<AspifLiteral>> GetAuxiliarPredicatesInBody();
-            std::pair<std::shared_ptr<AspifLiteral>, std::shared_ptr<int>> FindALiteralInBody(std::shared_ptr<AspifLiteral> val);
-            std::shared_ptr<AspifLiteral> FindALiteralInHead(std::shared_ptr<AspifLiteral> val);
+            AspifRuleLiteral FindALiteralInBody(std::shared_ptr<AspifLiteral> val);
+            AspifRuleLiteral FindALiteralInHead(std::shared_ptr<AspifLiteral> val);
             bool IsUseless(){ return useless; }
             void SetUselessness(const bool &value){ useless = value; }
             void SetEncodingLine(std::string &line){ encoding_line = &line; }
