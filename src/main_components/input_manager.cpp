@@ -4,7 +4,7 @@ using namespace aspsio;
 InputManager::InputManager(int argc, char const *argv[]):help_required(false), input_file(""), 
 a_projection_reverse_activated(true), b_projection_reverse_activated(true), fun_terms_projection_reverse_activated(true),
 decomposition_reverse_activated(true), isolated_vars_projection_reverse_activated(true), 
-aggregates_proj_reverse_activated(true), params_number(argc - 1)
+aggregates_proj_reverse_activated(true), duplicates_checking(true), params_number(argc - 1)
 {
 
     input_parameters = new std::string[params_number];
@@ -72,6 +72,8 @@ void InputManager::ProcessExecutionOption(const std::string &execution_option){
         fun_terms_projection_reverse_activated = false;
     } else if(execution_option == "--no-aggregates-reverse"){
         aggregates_proj_reverse_activated = false;
+    } else if(execution_option == "--no-duplicates-checking"){
+        duplicates_checking = false;
     }
 }
 

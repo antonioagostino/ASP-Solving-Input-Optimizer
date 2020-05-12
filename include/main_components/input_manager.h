@@ -4,7 +4,10 @@
 #include <locale>
 #include <fstream>
 #include <vector>
+#include <sstream>
+#include <algorithm>
 #include <list>
+#include <map>
 
 namespace aspsio {
 
@@ -24,6 +27,7 @@ namespace aspsio {
             bool fun_terms_projection_reverse_activated;
             bool isolated_vars_projection_reverse_activated;
             bool aggregates_proj_reverse_activated;
+            bool duplicates_checking;
             bool help_required;
             int params_number;
 
@@ -43,6 +47,7 @@ namespace aspsio {
             bool IsFunTermsProjectionReverseActivated(){ return fun_terms_projection_reverse_activated; }
             bool IsIsolatedVarsProjectionReverseActivated(){ return isolated_vars_projection_reverse_activated; }
             bool IsAggregatesProjectionReverseActivated(){ return aggregates_proj_reverse_activated; }
+            bool IsDuplicatesCheckingActivated(){ return duplicates_checking; }
             bool InputFilePathSelected(){ return !(input_file_path == ""); }
             ~InputManager();
     };

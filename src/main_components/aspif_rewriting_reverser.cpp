@@ -1,10 +1,401 @@
 #include "../../include/main_components/aspif_rewriting_reverser.h"
 using namespace aspsio;
 
-AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding){
+AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding):duplicate_checking(true){
     rules_to_reverse = &rules_set;
     aux_predicates_instances = &_aux_predicates_instances;
     input_encoding = &_input_encoding;
+}
+
+//  Search a rule duplication, even if literals' order is different
+//  then avoid a usefull duplication that may cause errors during
+//  reversing
+
+int AspifRewritingReverser::CountDuplicate(const std::string &rule){
+
+    std::istringstream rule_stream(rule);
+
+    int occurrences = 0;
+
+    int rule_type, rule_second_param, literals_number, body_literals_number;;
+    int body_type, lower_bound;
+
+    std::vector<int> rule_head;
+    std::vector<int> rule_body;
+
+    rule_stream >> rule_type;
+    rule_stream >> rule_second_param;
+    rule_stream >> literals_number;
+
+    for (int i = 0; i < literals_number; i++)
+    {
+        int literal;
+        rule_stream >> literal;
+        rule_head.push_back(literal);
+
+        if(rule_type == 2){
+            int weight;
+            rule_stream >> weight;
+            rule_head.push_back(weight);
+        }
+    }
+
+    if(rule_type == 1){
+        rule_stream >> body_type;
+        if(body_type == 1)
+            rule_stream >> lower_bound;
+        
+        rule_stream >> body_literals_number;
+
+        for (int i = 0; i < body_literals_number; i++)
+        {
+            int literal;
+            rule_stream >> literal;
+            rule_body.push_back(literal);
+
+            if(body_type == 1){
+                int weight;
+                rule_stream >> weight;
+                rule_body.push_back(weight);
+            }
+        }
+    }
+
+    for(auto it = rules_to_reverse->begin();it != rules_to_reverse->end(); it++)
+    {
+        std::istringstream duplicate_stream(*((*it)->GetEncodingLine()));
+        int duplicate_type, duplicate_second_param,  dupl_literals_number;
+        std::vector<int> dupl_head;
+        std::vector<int> dupl_body;
+
+        duplicate_stream >> duplicate_type;
+
+        if(rule_type != duplicate_type)
+            continue;
+
+        duplicate_stream >> duplicate_second_param;
+
+        if(rule_second_param != duplicate_second_param)
+            continue;
+
+        duplicate_stream >> dupl_literals_number;
+        
+        if(dupl_literals_number != literals_number)
+            continue;
+
+        for (int i = 0; i < dupl_literals_number; i++)
+        {
+            int literal;
+            duplicate_stream >> literal;
+            dupl_head.push_back(literal);
+
+            if(rule_type == 2){
+                int weight;
+                duplicate_stream >> weight;
+                dupl_head.push_back(weight);
+            }
+        }
+
+        bool equal_head = true;
+
+        for (int idx = 0; idx < literals_number && equal_head; idx++)
+        {
+            bool found = false;
+
+            for (int idx2 = 0; idx2 < dupl_literals_number && !found; idx2++)
+            {
+                if(rule_head[idx] != dupl_head[idx2]){
+                    if(rule_type == 2)
+                        idx2++;
+                    continue;
+                }
+
+                if(rule_type == 2)
+                    if(rule_head[idx + 1] != dupl_head[++idx2])
+                        continue;
+
+                found = true;
+            }
+
+            if(rule_type == 2)
+                idx++;
+
+            if(!found)
+                equal_head = false;
+        }
+
+        if(!equal_head)
+            continue;
+
+        int dupl_body_type, dupl_lower_bound, dupl_literals_body_number;
+
+        if(duplicate_type == 1){
+            duplicate_stream >> dupl_body_type;
+
+            if(dupl_body_type != body_type)
+                continue;
+            
+            if(dupl_body_type == 1){
+                duplicate_stream >> dupl_lower_bound;
+
+                if(dupl_lower_bound != lower_bound)
+                    continue;
+            }
+
+            duplicate_stream >> dupl_literals_body_number;
+        
+
+            if(dupl_literals_body_number != body_literals_number)
+                continue;
+
+            for (int i = 0; i < dupl_literals_body_number; i++)
+            {
+                int literal;
+                duplicate_stream >> literal;
+                dupl_body.push_back(literal);
+
+                if(dupl_body_type == 1){
+                    int weight;
+                    duplicate_stream >> weight;
+                    dupl_body.push_back(weight);
+                }
+            }
+
+            bool equal_body = true;
+
+            for (int idx = 0; idx < body_literals_number && equal_body; idx++)
+            {
+                bool found = false;
+
+                for (int idx2 = 0; idx2 < dupl_literals_body_number && !found; idx2++)
+                {
+                    if(rule_body[idx] != dupl_body[idx2]){
+                        if(body_type == 1)
+                            idx2++;
+                        continue;
+                    }
+
+                    if(body_type == 1)
+                        if(rule_body[idx + 1] != dupl_body[++idx2])
+                            continue;  
+
+                    
+                    found = true;
+                }
+
+                if(body_type == 1)
+                    idx++;
+
+                if(!found)
+                    equal_body = false;
+            }
+
+            if(!equal_body)
+                continue;
+
+        }
+
+        occurrences++;
+        
+    }
+
+
+    return occurrences - 1;
+}
+
+//  Search a rule duplication, even if literals' order is different
+//  then avoid a usefull duplication that may cause errors during
+//  reversing
+
+int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<std::string> &rules){
+
+    std::istringstream rule_stream(rule);
+
+    int occurrences = 0;
+
+    int rule_type, rule_second_param, literals_number, body_literals_number;;
+    int body_type, lower_bound;
+
+    std::vector<int> rule_head;
+    std::vector<int> rule_body;
+
+    rule_stream >> rule_type;
+    rule_stream >> rule_second_param;
+    rule_stream >> literals_number;
+
+    for (int i = 0; i < literals_number; i++)
+    {
+        int literal;
+        rule_stream >> literal;
+        rule_head.push_back(literal);
+
+        if(rule_type == 2){
+            int weight;
+            rule_stream >> weight;
+            rule_head.push_back(weight);
+        }
+    }
+
+    if(rule_type == 1){
+        rule_stream >> body_type;
+        if(body_type == 1)
+            rule_stream >> lower_bound;
+        
+        rule_stream >> body_literals_number;
+
+        for (int i = 0; i < body_literals_number; i++)
+        {
+            int literal;
+            rule_stream >> literal;
+            rule_body.push_back(literal);
+
+            if(body_type == 1){
+                int weight;
+                rule_stream >> weight;
+                rule_body.push_back(weight);
+            }
+        }
+    }
+
+    for(auto it = rules.begin();it != rules.end(); it++)
+    {
+        std::istringstream duplicate_stream(*it);
+        int duplicate_type, duplicate_second_param,  dupl_literals_number;
+        std::vector<int> dupl_head;
+        std::vector<int> dupl_body;
+
+        duplicate_stream >> duplicate_type;
+
+        if(rule_type != duplicate_type)
+            continue;
+
+        duplicate_stream >> duplicate_second_param;
+
+        if(rule_second_param != duplicate_second_param)
+            continue;
+
+        duplicate_stream >> dupl_literals_number;
+        
+        if(dupl_literals_number != literals_number)
+            continue;
+
+        for (int i = 0; i < dupl_literals_number; i++)
+        {
+            int literal;
+            duplicate_stream >> literal;
+            dupl_head.push_back(literal);
+
+            if(rule_type == 2){
+                int weight;
+                duplicate_stream >> weight;
+                dupl_head.push_back(weight);
+            }
+        }
+
+        bool equal_head = true;
+
+        for (int idx = 0; idx < literals_number && equal_head; idx++)
+        {
+            bool found = false;
+
+            for (int idx2 = 0; idx2 < dupl_literals_number && !found; idx2++)
+            {
+                if(rule_head[idx] != dupl_head[idx2]){
+                    if(rule_type == 2)
+                        idx2++;
+                    continue;
+                }
+
+                if(rule_type == 2)
+                    if(rule_head[idx + 1] != dupl_head[++idx2])
+                        continue;
+
+                found = true;
+            }
+
+            if(rule_type == 2)
+                idx++;
+
+            if(!found)
+                equal_head = false;
+        }
+
+        if(!equal_head)
+            continue;
+
+        int dupl_body_type, dupl_lower_bound, dupl_literals_body_number;
+
+        if(duplicate_type == 1){
+            duplicate_stream >> dupl_body_type;
+
+            if(dupl_body_type != body_type)
+                continue;
+            
+            if(dupl_body_type == 1){
+                duplicate_stream >> dupl_lower_bound;
+
+                if(dupl_lower_bound != lower_bound)
+                    continue;
+            }
+
+            duplicate_stream >> dupl_literals_body_number;
+        
+
+            if(dupl_literals_body_number != body_literals_number)
+                continue;
+
+            for (int i = 0; i < dupl_literals_body_number; i++)
+            {
+                int literal;
+                duplicate_stream >> literal;
+                dupl_body.push_back(literal);
+
+                if(dupl_body_type == 1){
+                    int weight;
+                    duplicate_stream >> weight;
+                    dupl_body.push_back(weight);
+                }
+            }
+
+            bool equal_body = true;
+
+            for (int idx = 0; idx < body_literals_number && equal_body; idx++)
+            {
+                bool found = false;
+
+                for (int idx2 = 0; idx2 < dupl_literals_body_number && !found; idx2++)
+                {
+                    if(rule_body[idx] != dupl_body[idx2]){
+                        if(body_type == 1)
+                            idx2++;
+                        continue;
+                    }
+
+                    if(body_type == 1)
+                        if(rule_body[idx + 1] != dupl_body[++idx2])
+                            continue;  
+
+                    
+                    found = true;
+                }
+
+                if(body_type == 1)
+                    idx++;
+
+                if(!found)
+                    equal_body = false;
+            }
+
+            if(!equal_body)
+                continue;
+
+        }
+
+        occurrences++;
+        
+    }
+
+    return occurrences;
 }
 
 
@@ -16,15 +407,30 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
     // We need to duplicate some rules to generate a complete reversing
 
     if(auxiliar_to_adjust->GetOccurrencesInHeads() > 1 && auxiliar_to_adjust->GetOccurrencesInBodies() > 0){
-        int occurrences_in_heads = auxiliar_to_adjust->GetOccurrencesInHeads();
         std::list<std::string>::iterator where_to_insert;
+        std::vector<std::string> duplicated;
 
         for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
         {
+            int occurrences_in_heads = auxiliar_to_adjust->GetOccurrencesInHeads();
             if((*rule)->AuxiliarPredicatesInBodyNumber() > 0){
                 AspifRuleLiteral position = (*rule)->FindALiteralInBody(auxiliar_to_adjust);
-                if(position.GetLiteral()){
-                    where_to_insert = find(input_encoding->begin(), input_encoding->end(), *(*rule)->GetEncodingLine());
+                if(position.GetLiteral() && !duplicate_checking || position.GetLiteral() && CountDuplicate(*((*rule)->GetEncodingLine()), duplicated) == 0){
+                    
+                    if(duplicate_checking){
+                        int rule_duplication = CountDuplicate(*((*rule)->GetEncodingLine()));
+
+                        //  If false, there will no be duplication
+                        if(rule_duplication < (occurrences_in_heads - 1)){
+                            where_to_insert = find(input_encoding->begin(), input_encoding->end(), *(*rule)->GetEncodingLine());
+                            duplicated.push_back(*((*rule)->GetEncodingLine()));
+                        }
+
+                        occurrences_in_heads -= rule_duplication;
+                    } else {
+                        where_to_insert = find(input_encoding->begin(), input_encoding->end(), *(*rule)->GetEncodingLine());
+                    }
+
                     
                     //  Duplicates, n - 1 times, rules where this auxiliar predicates occurs in body
                     //  where "n" is the occurrences number in rules' head
@@ -139,7 +545,7 @@ int AspifRewritingReverser::DoReverse()
                     if((*rule)->AuxiliarPredicatesInBodyNumber() > 0){
 
                         //  First condition: Due to I-DLV rules duplication
-                        if(predicate_to_substitute->GetOccurrencesInHeads() == 1 || find(rules_reversed.begin(), rules_reversed.end(), *(*rule)->GetEncodingLine()) == rules_reversed.end()){
+                        if(predicate_to_substitute->GetOccurrencesInHeads() == 1 || CountDuplicate(*((*rule)->GetEncodingLine()), rules_reversed) == 0){
                             AspifRuleLiteral position = (*rule)->FindALiteralInBody(predicate_to_substitute);
                             if(position.GetLiteral()){
                                 
