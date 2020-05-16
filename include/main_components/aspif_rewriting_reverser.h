@@ -19,12 +19,13 @@ namespace aspsio {
             std::unordered_map<int, std::shared_ptr<AspifLiteral>> *aux_predicates_instances;
             std::list<std::string> *input_encoding;
             bool duplicate_checking;
+            bool limit_body;
             virtual void DoRulesAdjustments(std::shared_ptr<AspifLiteral> auxiliar_to_adjust);
             int CountDuplicate(const std::string &rule, std::vector<std::string> &rules);
             int CountDuplicate(const std::string &rule);
 
         public:
-            AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding);
+            AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding, const bool &aux_limit_body);
             virtual int DoReverse();
             void DisableDuplicateChecking(){ duplicate_checking = false; }
 

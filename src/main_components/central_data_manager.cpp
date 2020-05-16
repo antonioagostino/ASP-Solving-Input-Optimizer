@@ -22,6 +22,7 @@ void CentralDataManager::StartReversing(){
             aspif_parser = new AspifParser(input_manager.GetInputEncoding(), rules_to_optimize, patterns_to_match);
             
             int reversing_index = 0;
+            int aggregate_index = -1;
             
 
             // Adds rewriting patterns that auxiliar predicates has to match
@@ -58,6 +59,7 @@ void CentralDataManager::StartReversing(){
 
             if(input_manager.IsAggregatesProjectionReverseActivated()){
                 aspif_parser->AddReverseParsingOption("aux_aggregate");
+                aggregate_index = reversing_index;
                 reversing_index++;
             }
 
@@ -71,7 +73,11 @@ void CentralDataManager::StartReversing(){
             //  Creates a Reverser for each Rewriting Type
             for (int i = 0; i < reversing_index; i++)
             {
-                reversers.push_back(AspifRewritingReverser(rules_to_optimize[i], aspif_parser->GetAuxPredicatesInstances()[i], input_manager.GetInputEncoding()));
+                bool limit_body = false;
+                if(i == aggregate_index)
+                    limit_body = true;
+                
+                reversers.push_back(AspifRewritingReverser(rules_to_optimize[i], aspif_parser->GetAuxPredicatesInstances()[i], input_manager.GetInputEncoding(), limit_body));
                 if(!input_manager.IsDuplicatesCheckingActivated())
                     reversers.back().DisableDuplicateChecking();
             }

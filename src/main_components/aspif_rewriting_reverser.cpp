@@ -1,7 +1,7 @@
 #include "../../include/main_components/aspif_rewriting_reverser.h"
 using namespace aspsio;
 
-AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding):duplicate_checking(true){
+AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding, const bool &aux_limit_body):duplicate_checking(true), limit_body(aux_limit_body){
     rules_to_reverse = &rules_set;
     aux_predicates_instances = &_aux_predicates_instances;
     input_encoding = &_input_encoding;
@@ -517,8 +517,19 @@ int AspifRewritingReverser::DoReverse()
                 if((*rule)->AuxiliarPredicatesInBodyNumber() == 0 && (*rule)->AuxiliarPredicatesInHeadNumber() == 1){
                     AspifRuleLiteral aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
                     if(aux_in_head.GetLiteral()){
-                        body = &(*rule)->GetPredicatesInBody();
-                        rule_to_delete = rule;
+                        //  Used to make Aggregates Reversing works
+                        if(!limit_body){
+                            body = &(*rule)->GetPredicatesInBody();
+                            rule_to_delete = rule;
+                        } else {
+                            if((*rule)->GetPredicatesInBody().size() == 1){
+                                body = &(*rule)->GetPredicatesInBody();
+                                rule_to_delete = rule;
+                            } else {
+                                aux_reversed = true;
+                            }
+                        }
+
                         break;
                     }
                 }
