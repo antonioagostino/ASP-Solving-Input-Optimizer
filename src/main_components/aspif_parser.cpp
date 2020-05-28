@@ -2,7 +2,7 @@
 using namespace aspsio;
 
 AspifParser::AspifParser(std::list<std::string> &input_data, std::vector<std::list<std::shared_ptr<AspifStatement>>> &rules_sets, 
-                    std::vector<std::string> &pattern_set)
+                    std::vector<std::string> &pattern_set):optimize_reversing_activated(false)
 {
     input_encoding = &input_data;
     rules_to_optimize = &rules_sets;
@@ -330,6 +330,12 @@ void AspifParser::StoreSingleRuleStatement(std::string input_line, std::string &
 
             // It helps to save computation time later, during the Reversing Phase
             predicate->IncrementOccurrencesInBodies();
+
+            if(optimize_reversing_activated && rule->AuxiliarPredicatesInHeadNumber() == 1){
+                
+                // A rule with an auxiliar predicate in head has a unique literal in head
+                (*rule->GetAuxiliarPredicatesInHead().front()).AddLiteralDependency(predicate);
+            }
 
         } else {
             predicate = std::make_shared<AspifLiteral>(std::abs(predicate_id), is_an_auxiliar_predicate);

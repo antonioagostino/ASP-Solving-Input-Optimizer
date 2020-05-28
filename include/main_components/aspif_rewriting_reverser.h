@@ -27,6 +27,7 @@ namespace aspsio {
         public:
             AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding, const bool &aux_limit_body);
             virtual int DoReverse();
+            int RemoveUselessPredicates(std::unordered_map<int, int> &removed_predicates);
             void DisableDuplicateChecking(){ duplicate_checking = false; }
 
     };

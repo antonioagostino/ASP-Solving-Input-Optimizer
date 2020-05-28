@@ -36,6 +36,10 @@ namespace aspsio {
 
             std::list<std::string>::iterator line_to_parse;
 
+            //  Option used to know that rules with need of duplication
+            //  will not be reversed
+            bool optimize_reversing_activated;
+
             void SaveAuxiliarPredicates();
             void SaveRulesToOptimize();
             void ParseRuleStatement(std::string input_line, std::string &full_input_line);
@@ -47,6 +51,7 @@ namespace aspsio {
             AspifParser(std::list<std::string> &input_data, std::vector<std::list<std::shared_ptr<AspifStatement>>> &rules_sets, 
                     std::vector<std::string> &pattern_set);
             virtual void StartAnalysis();
+            void ActivateOptimizeReversing(){ optimize_reversing_activated = true; }
             void AddReverseParsingOption(const std::string &pattern);
             std::vector<std::unordered_map<int, std::shared_ptr<AspifLiteral>>>& GetAuxPredicatesInstances(){
                 return aux_predicates_instances;

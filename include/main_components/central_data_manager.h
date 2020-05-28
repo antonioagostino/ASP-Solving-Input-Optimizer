@@ -25,6 +25,10 @@ namespace aspsio {
 
             std::vector<AspifRewritingReverser> reversers;
 
+            //  Predicates that will not be reversed because they need
+            //  rules duplication
+            std::unordered_map<int, int> predicates_that_will_not_be_reversed;
+
             bool encoding_file_opened;
             
         public:

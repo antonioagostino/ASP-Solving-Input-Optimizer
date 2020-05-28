@@ -1,6 +1,9 @@
 #ifndef ASPIF_LITERAL_H
 #define ASPIF_LITERAL_H
 #include <string>
+#include <vector>
+#include <algorithm>
+#include <memory>
 
 namespace aspsio {
 
@@ -11,6 +14,7 @@ namespace aspsio {
             bool auxiliar;
             int occurrences_in_heads;
             int occurrences_in_bodies;
+            std::vector<std::shared_ptr<AspifLiteral>> depends_on;
 
         public:
             AspifLiteral(const int &_id, const bool &_auxiliar);
@@ -20,6 +24,8 @@ namespace aspsio {
             int GetOccurrencesInBodies(){ return occurrences_in_bodies; }
             void IncrementOccurrencesInHeads(){ occurrences_in_heads++; }
             void IncrementOccurrencesInBodies(){ occurrences_in_bodies++; }
+            void AddLiteralDependency(std::shared_ptr<AspifLiteral> literal);
+            std::vector<std::shared_ptr<AspifLiteral>>& GetLiteralsDependecies(){ return depends_on; }
 
 
 

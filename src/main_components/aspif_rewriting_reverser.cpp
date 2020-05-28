@@ -398,6 +398,42 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<
     return occurrences;
 }
 
+// Removes auxiliar predicates that need rules duplication
+
+int AspifRewritingReverser::RemoveUselessPredicates(std::unordered_map<int, int> &removed_predicates){
+    
+    auto it = aux_predicates_instances->begin();
+    int removed = 0;
+    
+    while (it != aux_predicates_instances->end())
+    {
+        bool to_remove = false;
+
+        if(it->second->GetOccurrencesInHeads() > 1 && it->second->GetOccurrencesInBodies() > 0){
+            to_remove = true;
+        } else {
+            std::vector<std::shared_ptr<AspifLiteral>> dependencies = it->second->GetLiteralsDependecies();
+            for(int i = 0; i < dependencies.size(); i++){
+                if(removed_predicates.find(dependencies[i]->GetId()) != removed_predicates.end()){
+                    to_remove = true;
+                    break;
+                }
+            }
+        }
+
+        if(to_remove){
+            removed_predicates.insert(std::pair<int, int>(it->second->GetId(), it->second->GetId()));
+            it = aux_predicates_instances->erase(it);
+            removed++;
+        } else {
+            it++;
+        }
+    }
+
+    return removed;
+    
+}
+
 
 //  Checks if it's necessary to duplicate rules
 //  to performs a right Reversing of these rules

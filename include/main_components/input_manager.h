@@ -29,6 +29,7 @@ namespace aspsio {
             bool aggregates_proj_reverse_activated;
             bool duplicates_checking;
             bool help_required;
+            bool optimize_reversing_activated;
             int params_number;
 
 
@@ -48,6 +49,7 @@ namespace aspsio {
             bool IsIsolatedVarsProjectionReverseActivated(){ return isolated_vars_projection_reverse_activated; }
             bool IsAggregatesProjectionReverseActivated(){ return aggregates_proj_reverse_activated; }
             bool IsDuplicatesCheckingActivated(){ return duplicates_checking; }
+            bool OptimizeReversingActivated(){ return optimize_reversing_activated; }
             bool InputFilePathSelected(){ return !(input_file_path == ""); }
             ~InputManager();
     };

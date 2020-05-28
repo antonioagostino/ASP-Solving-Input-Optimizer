@@ -82,6 +82,20 @@ void CentralDataManager::StartReversing(){
                     reversers.back().DisableDuplicateChecking();
             }
 
+            if(input_manager.OptimizeReversingActivated()){
+                int predicates_removed;
+
+                do {
+                    predicates_removed = 0;
+
+                    for (int i = 0; i < reversers.size(); i++)
+                    {
+                        predicates_removed += reversers[i].RemoveUselessPredicates(predicates_that_will_not_be_reversed);
+                    }
+
+                } while (predicates_removed > 0);
+            }
+
             int reverses_done;
 
             do {
@@ -121,6 +135,7 @@ std::string CentralDataManager::GetOutput(){
         help_output += "so it makes transformations to a file written using this format and creates a new, optimized, input encoded file.\n\n";
         help_output += "Options:\n";
         help_output += "--------------------\n";
+        help_output += "--optimize-reversing\t\t\tAvoid to Reverse rules that need to be duplicated to be reversed";
         help_output += "--no-decomp-reverse\t\t\tDisactivates the Reversing of rules rewritten using Decomposition Rewriting\n\n";
         help_output += "--no-a-proj-reverse\t\t\tDisactivates the Reversing of rules rewritten using alpha-Projection Rewriting\n\n";
         help_output += "--no-b-proj-reverse\t\t\tDisactivates the Reversing of rules rewritten using beta-Prpjection Rewriting\n\n";
