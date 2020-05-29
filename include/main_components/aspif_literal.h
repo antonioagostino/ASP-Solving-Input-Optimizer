@@ -14,6 +14,7 @@ namespace aspsio {
             bool auxiliar;
             int occurrences_in_heads;
             int occurrences_in_bodies;
+            int rewriting_type_id;
             std::vector<std::shared_ptr<AspifLiteral>> depends_on;
 
         public:
@@ -26,6 +27,8 @@ namespace aspsio {
             void IncrementOccurrencesInBodies(){ occurrences_in_bodies++; }
             void AddLiteralDependency(std::shared_ptr<AspifLiteral> literal);
             std::vector<std::shared_ptr<AspifLiteral>>& GetLiteralsDependecies(){ return depends_on; }
+            void SetRewritingType(const int &_id){ rewriting_type_id = _id; }
+            int GetRewritingType(){ return rewriting_type_id; }
 
 
 

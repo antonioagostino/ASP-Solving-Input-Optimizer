@@ -17,7 +17,8 @@ namespace aspsio {
 
             //  Each cell of this Vector represents a rewriting category
             //  so rules which need to be reversed are divided in categories
-            std::vector<std::list<std::shared_ptr<AspifStatement>>> rules_to_optimize;
+            //  and organized by Auxiliar Predicates appearences
+            std::vector<std::unordered_map<int, std::list<std::shared_ptr<AspifStatement>>>> rules_to_optimize;
 
             //  Each rewriting method uses a standard name for its auxiliar
             //  predicates, so these patterns are used to find them

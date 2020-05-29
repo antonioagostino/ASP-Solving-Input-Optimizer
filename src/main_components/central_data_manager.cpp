@@ -77,7 +77,7 @@ void CentralDataManager::StartReversing(){
                 if(i == aggregate_index)
                     limit_body = true;
                 
-                reversers.push_back(AspifRewritingReverser(rules_to_optimize[i], aspif_parser->GetAuxPredicatesInstances()[i], input_manager.GetInputEncoding(), limit_body));
+                reversers.push_back(AspifRewritingReverser(rules_to_optimize[i], aspif_parser->GetAuxPredicatesInstances()[i], input_manager.GetInputEncoding(), limit_body, rules_to_optimize));
                 if(!input_manager.IsDuplicatesCheckingActivated())
                     reversers.back().DisableDuplicateChecking();
             }
@@ -114,9 +114,11 @@ void CentralDataManager::StartReversing(){
             {
                 for (auto it = rules_to_optimize[i].begin(); it !=  rules_to_optimize[i].end(); it++)
                 {
-                        (*it)->DoOutput();
+                    for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+                    {
+                            (*it2)->DoOutput();
+                    }
                 }
-                
             }
         }
     }

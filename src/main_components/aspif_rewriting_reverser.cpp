@@ -1,8 +1,9 @@
 #include "../../include/main_components/aspif_rewriting_reverser.h"
 using namespace aspsio;
 
-AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifStatement>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding, const bool &aux_limit_body):duplicate_checking(true), limit_body(aux_limit_body){
+AspifRewritingReverser::AspifRewritingReverser(std::unordered_map<int, std::list<std::shared_ptr<AspifStatement>>> &rules_set, std::unordered_map<int, std::shared_ptr<AspifLiteral>> &_aux_predicates_instances, std::list<std::string> &_input_encoding, const bool &aux_limit_body, std::vector<std::unordered_map<int, std::list<std::shared_ptr<AspifStatement>>>> &all_rules_sets):duplicate_checking(true), limit_body(aux_limit_body){
     rules_to_reverse = &rules_set;
+    all_rules_to_reverse = &all_rules_sets;
     aux_predicates_instances = &_aux_predicates_instances;
     input_encoding = &_input_encoding;
 }
@@ -11,7 +12,7 @@ AspifRewritingReverser::AspifRewritingReverser(std::list<std::shared_ptr<AspifSt
 //  then avoid a usefull duplication that may cause errors during
 //  reversing
 
-int AspifRewritingReverser::CountDuplicate(const std::string &rule){
+int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::shared_ptr<AspifLiteral> auxiliar){
 
     std::istringstream rule_stream(rule);
 
@@ -61,7 +62,7 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule){
         }
     }
 
-    for(auto it = rules_to_reverse->begin();it != rules_to_reverse->end(); it++)
+    for(auto it = rules_to_reverse->at(auxiliar->GetId()).begin();  it != rules_to_reverse->at(auxiliar->GetId()).end(); it++)
     {
         std::istringstream duplicate_stream(*((*it)->GetEncodingLine()));
         int duplicate_type, duplicate_second_param,  dupl_literals_number;
@@ -446,7 +447,7 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
         std::list<std::string>::iterator where_to_insert;
         std::vector<std::string> duplicated;
 
-        for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
+        for (auto rule = rules_to_reverse->at(auxiliar_to_adjust->GetId()).begin(); rule != rules_to_reverse->at(auxiliar_to_adjust->GetId()).end(); rule++)
         {
             int occurrences_in_heads = auxiliar_to_adjust->GetOccurrencesInHeads();
             if((*rule)->AuxiliarPredicatesInBodyNumber() > 0){
@@ -454,7 +455,7 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
                 if(position.GetLiteral() && !duplicate_checking || position.GetLiteral() && CountDuplicate(*((*rule)->GetEncodingLine()), duplicated) == 0){
                     
                     if(duplicate_checking){
-                        int rule_duplication = CountDuplicate(*((*rule)->GetEncodingLine()));
+                        int rule_duplication = CountDuplicate(*((*rule)->GetEncodingLine()), auxiliar_to_adjust);
 
                         //  If false, there will no be duplication
                         if(rule_duplication < (occurrences_in_heads - 1)){
@@ -479,7 +480,25 @@ void AspifRewritingReverser::DoRulesAdjustments(std::shared_ptr<AspifLiteral> au
                         }
 
                         new_rule->SetEncodingLine(*where_to_insert);
-                        rule = rules_to_reverse->insert(++rule, new_rule);
+
+                        std::list<std::shared_ptr<AspifLiteral>> auxs_in_head = new_rule->GetAuxiliarPredicatesInHead();
+                        std::list<std::shared_ptr<AspifLiteral>> auxs_in_body = new_rule->GetAuxiliarPredicatesInBody();
+
+                        for (auto it = auxs_in_head.begin(); it != auxs_in_head.end(); it++)
+                        {
+                            if(*it != auxiliar_to_adjust)
+                                all_rules_to_reverse->at((*it)->GetRewritingType()).at((*it)->GetId()).push_back(new_rule);
+
+                        }
+
+                        for (auto it = auxs_in_body.begin(); it != auxs_in_body.end(); it++)
+                        {
+                            if(*it != auxiliar_to_adjust)
+                                all_rules_to_reverse->at((*it)->GetRewritingType()).at((*it)->GetId()).push_back(new_rule);
+
+                        }
+                        
+                        rule = rules_to_reverse->at(auxiliar_to_adjust->GetId()).insert(++rule, new_rule);
 
                         //  We must increment the occurrences of auxiliar predicates in bodies or
                         //  heads to control reversing of rules containing it
@@ -511,7 +530,7 @@ int AspifRewritingReverser::DoReverse()
     int reverses_done = 0;
     auto it = aux_predicates_instances->begin();
     
-    while (it != aux_predicates_instances->end() && rules_to_reverse->size() > 0)
+    while (it != aux_predicates_instances->end() && rules_to_reverse->at(it->second->GetId()).size() > 0)
     {
         std::shared_ptr<AspifLiteral> predicate_to_substitute = (*it).second;
         bool aux_reversed = false;
@@ -522,7 +541,7 @@ int AspifRewritingReverser::DoReverse()
         //  in a rule's body BUT could haven't in other rules. So an auxiliare predicate
         //  can be reversed only if it has not any dependence.
 
-        for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
+        for (auto rule = rules_to_reverse->at(predicate_to_substitute->GetId()).begin(); rule != rules_to_reverse->at(predicate_to_substitute->GetId()).end(); rule++)
         {
             if((*rule)->AuxiliarPredicatesInHeadNumber() == 1){
                 AspifRuleLiteral aux_in_head = (*rule)->FindALiteralInHead(predicate_to_substitute);
@@ -544,10 +563,10 @@ int AspifRewritingReverser::DoReverse()
         for (int i = 0; i < predicate_to_substitute->GetOccurrencesInHeads() && !auxiliar_will_be_reversed_later; i++)
         {
             std::list<AspifRuleLiteral> *body = NULL;
-            std::list<std::shared_ptr<AspifStatement>>::iterator rule_to_delete = rules_to_reverse->end();
+            std::list<std::shared_ptr<AspifStatement>>::iterator rule_to_delete = rules_to_reverse->at(predicate_to_substitute->GetId()).end();
             bool rule_can_be_eliminated = false;
             
-            for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
+            for (auto rule = rules_to_reverse->at(predicate_to_substitute->GetId()).begin(); rule != rules_to_reverse->at(predicate_to_substitute->GetId()).end(); rule++)
             {
                 
                 if((*rule)->AuxiliarPredicatesInBodyNumber() == 0 && (*rule)->AuxiliarPredicatesInHeadNumber() == 1){
@@ -587,7 +606,7 @@ int AspifRewritingReverser::DoReverse()
                 int reverses_limit = predicate_to_substitute->GetOccurrencesInBodies() / predicate_to_substitute->GetOccurrencesInHeads();
 
                 std::vector<std::string> rules_reversed;
-                for (auto rule = rules_to_reverse->begin(); rule != rules_to_reverse->end(); rule++)
+                for (auto rule = rules_to_reverse->at(predicate_to_substitute->GetId()).begin(); rule != rules_to_reverse->at(predicate_to_substitute->GetId()).end(); rule++)
                 {
                     if((*rule)->AuxiliarPredicatesInBodyNumber() > 0){
 
@@ -635,9 +654,9 @@ int AspifRewritingReverser::DoReverse()
             }
 
             //  Rule removing to save computation steps
-            if(rule_to_delete != rules_to_reverse->end() && rule_can_be_eliminated){
+            if(rule_to_delete != rules_to_reverse->at(predicate_to_substitute->GetId()).end() && rule_can_be_eliminated){
                 (*rule_to_delete)->SetUselessness(true);
-                rules_to_reverse->erase(rule_to_delete);
+                rules_to_reverse->at(predicate_to_substitute->GetId()).erase(rule_to_delete);
             }
         }
 
