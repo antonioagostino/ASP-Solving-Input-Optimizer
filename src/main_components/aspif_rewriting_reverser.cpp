@@ -99,11 +99,11 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::shared_
 
         bool equal_head = true;
 
-        for (int idx = 0; idx < literals_number && equal_head; idx++)
+        for (int idx = 0; idx < rule_head.size() && equal_head; idx++)
         {
             bool found = false;
 
-            for (int idx2 = 0; idx2 < dupl_literals_number && !found; idx2++)
+            for (int idx2 = 0; idx2 < dupl_head.size() && !found; idx2++)
             {
                 if(rule_head[idx] != dupl_head[idx2]){
                     if(rule_type == 2)
@@ -111,9 +111,15 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::shared_
                     continue;
                 }
 
-                if(rule_type == 2)
+                if(rule_type == 2){
                     if(rule_head[idx + 1] != dupl_head[++idx2])
                         continue;
+
+                    dupl_head[idx2] = 0;
+                    dupl_head[idx2 - 1] = 0;
+                } else {
+                    dupl_head[idx2] = 0;
+                }
 
                 found = true;
             }
@@ -164,11 +170,11 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::shared_
 
             bool equal_body = true;
 
-            for (int idx = 0; idx < body_literals_number && equal_body; idx++)
+            for (int idx = 0; idx < rule_body.size() && equal_body; idx++)
             {
                 bool found = false;
 
-                for (int idx2 = 0; idx2 < dupl_literals_body_number && !found; idx2++)
+                for (int idx2 = 0; idx2 < dupl_body.size() && !found; idx2++)
                 {
                     if(rule_body[idx] != dupl_body[idx2]){
                         if(body_type == 1)
@@ -176,9 +182,15 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::shared_
                         continue;
                     }
 
-                    if(body_type == 1)
+                    if(body_type == 1){
                         if(rule_body[idx + 1] != dupl_body[++idx2])
                             continue;  
+
+                        dupl_body[idx2] = 0;
+                        dupl_body[idx2 - 1] = 0;
+                    } else {
+                        dupl_body[idx2] = 0;
+                    }
 
                     
                     found = true;
@@ -295,11 +307,11 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<
 
         bool equal_head = true;
 
-        for (int idx = 0; idx < literals_number && equal_head; idx++)
+        for (int idx = 0; idx < rule_head.size() && equal_head; idx++)
         {
             bool found = false;
 
-            for (int idx2 = 0; idx2 < dupl_literals_number && !found; idx2++)
+            for (int idx2 = 0; idx2 < dupl_head.size() && !found; idx2++)
             {
                 if(rule_head[idx] != dupl_head[idx2]){
                     if(rule_type == 2)
@@ -307,9 +319,15 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<
                     continue;
                 }
 
-                if(rule_type == 2)
+                if(rule_type == 2){
                     if(rule_head[idx + 1] != dupl_head[++idx2])
                         continue;
+
+                    dupl_head[idx2] = 0;
+                    dupl_head[idx2 - 1] = 0;
+                } else {
+                    dupl_head[idx2] = 0;
+                }
 
                 found = true;
             }
@@ -360,11 +378,11 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<
 
             bool equal_body = true;
 
-            for (int idx = 0; idx < body_literals_number && equal_body; idx++)
+            for (int idx = 0; idx < rule_body.size() && equal_body; idx++)
             {
                 bool found = false;
 
-                for (int idx2 = 0; idx2 < dupl_literals_body_number && !found; idx2++)
+                for (int idx2 = 0; idx2 < dupl_body.size() && !found; idx2++)
                 {
                     if(rule_body[idx] != dupl_body[idx2]){
                         if(body_type == 1)
@@ -372,9 +390,15 @@ int AspifRewritingReverser::CountDuplicate(const std::string &rule, std::vector<
                         continue;
                     }
 
-                    if(body_type == 1)
+                    if(body_type == 1){
                         if(rule_body[idx + 1] != dupl_body[++idx2])
                             continue;  
+
+                        dupl_body[idx2] = 0;
+                        dupl_body[idx2 - 1] = 0;
+                    } else {
+                        dupl_body[idx2] = 0;
+                    }
 
                     
                     found = true;

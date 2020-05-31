@@ -58,13 +58,15 @@ void AspifParser::SaveAuxiliarPredicates(){
                         // The first element is the predicate's id
                         // The second element is the type of Rewriting
                         aux_predicates.insert(std::pair<int, int>(predicate_id, i));
-                        *line_to_parse = "";
 
                         break;
                     }
 
                 }
             }
+
+            if(predicate_name.substr(0, 3) == "aux")
+                *line_to_parse = "";
 
             line_to_parse--;
         } else {
